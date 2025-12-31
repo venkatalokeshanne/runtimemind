@@ -1,0 +1,161 @@
+/**
+ * ============================================================================
+ * POST CONTENT COMPONENT
+ * ============================================================================
+ * 
+ * Renders full post content with typography styles.
+ * 
+ * DESIGN DECISIONS:
+ * 
+ * 1. TYPOGRAPHY PLUGIN:
+ *    Uses @tailwindcss/typography for beautiful prose styling.
+ *    Proper heading sizes, paragraph spacing, list styles.
+ * 
+ * 2. MAX WIDTH:
+ *    Content constrained to ~65 characters for optimal readability.
+ *    Research shows 45-75 chars per line is ideal.
+ * 
+ * 3. SEMANTIC HTML:
+ *    Content wrapped in <article> with proper heading hierarchy.
+ * 
+ * ============================================================================
+ */
+
+'use client';
+
+import { formatDate, calculateReadingTime } from '@/lib/utils';
+import { SeriesNavigation } from './series-navigation';
+import { SeriesBanner } from './series-banner';
+import { RelatedPosts } from './related-posts';
+import { ShareSection } from './share-buttons';
+import { EditorContent } from '@/ui/Editor';
+
+/**
+ * PostContent Component
+ * 
+ * Renders the full blog post with proper typography.
+ * 
+ * @param {Object} props
+ * @param {Object} props.post - Full post data
+ * @param {boolean} props.fromSeries - Whether user navigated from series page
+ */
+export function PostContent({ post, fromSeries = false }) {
+  const readingTime = calculateReadingTime(post.content);
+
+  return (
+    <article className="max-w-2xl mx-auto">
+      {/* Post Header */}
+      <header className="mb-8 md:mb-12">
+        {/* Title - the only H1 on the page (SEO) */}
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-text-primary mb-4">
+          {post.title}
+        </h1>
+
+        {/* Meta information */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-text-secondary">
+          {/* Author */}
+          {post.author && (
+            <div className="flex items-center gap-2">
+              {post.author.avatar_url && (
+                <img
+                  src={post.author.avatar_url}
+                  alt={post.author.name}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              )}
+              <span className="font-medium">{post.author.name}</span>
+            </div>
+          )}
+
+          <span aria-hidden="true" className="hidden md:inline">·</span>
+
+          {/* Date */}
+          {post.published_at && (
+            <time dateTime={post.published_at}>
+              {formatDate(post.published_at)}
+            </time>
+          )}
+
+          <span aria-hidden="true">·</span>
+
+          {/* Reading time */}
+          <span>{readingTime} min read</span>
+        </div>
+
+        {/* Share Buttons */}
+        <div className="mt-4 pt-4 border-t border-border">
+          <ShareSection 
+            title={post.title}
+            url={typeof window !== 'undefined' ? window.location.href : `https://runtimemind.com/blog/${post.slug}`}
+            description={post.excerpt}
+          />
+        </div>
+      </header>
+
+      {/* Cover Image */}
+      {post.cover_image_url && (
+        <figure className="mb-8 md:mb-12 -mx-4 md:mx-0">
+          <img
+            src={post.cover_image_url}
+            alt={`Cover image for ${post.title}`}
+            className="w-full aspect-[2/1] object-cover md:rounded-[var(--radius-lg)]"
+          />
+        </figure>
+      )}
+
+      {/* Post Content */}
+      <EditorContent 
+        data={post.content}
+        className="prose prose-lg max-w-none"
+      />
+
+      {/* 
+        Series Navigation vs Related Posts:
+        - If user came from series page → Show full prev/next navigation
+        - If user opened post directly → Show series banner (if in series) + related posts
+      */}
+      {post.series_id && fromSeries ? (
+        <SeriesNavigation postId={post.id} />
+      ) : (
+        <>
+          {/* Show series banner if post is part of a series */}
+          {post.series_id && (
+            <div className="mt-12">
+              <SeriesBanner postId={post.id} />
+            </div>
+          )}
+          
+          {/* Show related posts */}
+          <RelatedPosts 
+            postId={post.id} 
+            seriesId={post.series_id} 
+            currentSlug={post.slug} 
+          />
+        </>
+      )}
+
+      {/* Author Bio (optional footer) */}
+      {post.author?.bio && (
+        <footer className="mt-12 pt-8 border-t border-border">
+          <div className="flex items-start gap-4">
+            {post.author.avatar_url && (
+              <img
+                src={post.author.avatar_url}
+                alt={post.author.name}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            )}
+            <div>
+              <p className="font-semibold text-text-primary">
+                {post.author.name}
+              </p>
+              <p className="text-text-secondary mt-1">
+                {post.author.bio}
+              </p>
+            </div>
+          </div>
+        </footer>
+      )}
+    </article>
+  );
+}

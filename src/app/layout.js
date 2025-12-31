@@ -1,0 +1,172 @@
+/**
+ * ============================================================================
+ * ROOT LAYOUT
+ * ============================================================================
+ * 
+ * The root layout wraps all pages and provides:
+ * - Global styles
+ * - Theme provider
+ * - Site header and footer
+ * - SEO metadata defaults
+ * 
+ * ARCHITECTURE:
+ * 
+ * 1. SERVER COMPONENT:
+ *    This is a Server Component by default. It renders on the server
+ *    for SEO benefits. Only children can be Client Components.
+ * 
+ * 2. METADATA API:
+ *    Uses Next.js Metadata API for SEO. Each page can override these
+ *    defaults with its own metadata export.
+ * 
+ * 3. THEME SCRIPT:
+ *    Inline script prevents flash of wrong theme on load.
+ *    Runs before React hydrates.
+ * 
+ * ============================================================================
+ */
+
+import { Geist, Geist_Mono } from 'next/font/google';
+import { ThemeProvider } from '@/lib/theme';
+import { AuthProvider } from '@/lib/auth';
+import { SiteHeader, SiteFooter } from '@/modules/layout/components';
+import './globals.css';
+
+/**
+ * FONT CONFIGURATION
+ * 
+ * We use:
+ * - Geist Sans: Modern, clean sans-serif for UI
+ * - Geist Mono: Matching monospace for code
+ * - Newsreader: Beautiful serif for post content (optional)
+ */
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+  display: 'swap', // Prevent FOIT (Flash of Invisible Text)
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+  display: 'swap',
+});
+
+/**
+ * SEO METADATA
+ * 
+ * Default metadata applied to all pages.
+ * Individual pages can override with their own `metadata` export.
+ * 
+ * SEO BEST PRACTICES:
+ * - Title template includes site name
+ * - Description under 160 characters
+ * - Open Graph for social sharing
+ * - robots configuration for indexing
+ */
+export const metadata = {
+  title: {
+    default: 'Runtimemind',
+    template: '%s | Runtimemind',
+  },
+  description: 'A modern tech blog platform for developers. Clean design, focused reading experience.',
+  keywords: ['tech blog', 'programming', 'software development', 'tutorials', 'technology'],
+  authors: [{ name: 'Runtimemind' }],
+  creator: 'Runtimemind',
+  
+  // Open Graph (Facebook, LinkedIn, etc.)
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    siteName: 'Runtimemind',
+    title: 'Runtimemind',
+    description: 'A modern tech blog platform for developers.',
+  },
+  
+  // Twitter Card
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Runtimemind',
+    description: 'A modern tech blog platform for developers.',
+  },
+  
+  // Robots
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+};
+
+/**
+ * Viewport configuration
+ * Separate from metadata as per Next.js 14+ requirements
+ */
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FAFAFA' },
+    { media: '(prefers-color-scheme: dark)', color: '#0F0F10' },
+  ],
+};
+
+/**
+ * Theme initialization script
+ * 
+ * WHY INLINE SCRIPT:
+ * This runs before React hydrates, preventing flash of wrong theme.
+ * We check localStorage and system preference, then apply class immediately.
+ */
+const themeScript = `
+  (function() {
+    try {
+      var theme = localStorage.getItem('runtimemind-theme');
+      var isDark = theme === 'dark' || 
+        (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.classList.add(isDark ? 'dark' : 'light');
+    } catch (e) {}
+  })();
+`;
+
+export default function RootLayout({ children }) {
+  return (
+    <html 
+      lang="en" 
+      suppressHydrationWarning // Required for theme script
+    >
+      <head>
+        {/* Theme initialization - must run before paint */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body
+        className={`
+          ${geistSans.variable} 
+          ${geistMono.variable} 
+          font-sans antialiased
+          min-h-screen flex flex-col
+        `}
+      >
+        <ThemeProvider defaultTheme="system">
+          <AuthProvider>
+            <SiteHeader siteName="Runtimemind" />
+            
+            {/* Main content area - grows to fill space, pt-16 for fixed header */}
+            <main className="flex-1 pt-16">
+              {children}
+            </main>
+            
+            <SiteFooter siteName="Runtimemind" />
+          </AuthProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
+
