@@ -16,19 +16,30 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, TrendingUp, Clock, Sparkles } from 'lucide-react';
-import { getPublishedPosts, getPublishedPostCount, getTrendingTags } from '@/modules/blog/services';
-import { PostGrid } from '@/modules/blog/components';
+import { getPublishedPosts, getPublishedPostCount, getTrendingTags } from '@/modules/articles/services';
+import { PostGrid } from '@/modules/articles/components';
 import { formatDate, calculateReadingTime } from '@/lib/utils';
 
 /**
  * Page metadata for SEO
  */
 export const metadata = {
-  title: 'Blog',
-  description: 'All articles and posts. Explore our collection of thoughtful writing.',
+  title: 'Articles - Tech Tutorials & Programming Guides',
+  description: 'Explore our collection of in-depth tech articles, programming tutorials, and software development guides. Learn web development, coding best practices, and more.',
+  keywords: ['tech articles', 'programming tutorials', 'web development', 'coding guides', 'software development'],
+  alternates: {
+    canonical: 'https://runtimemind.com/articles',
+  },
   openGraph: {
-    title: 'Blog | RuntimeMind',
-    description: 'All articles and posts from RuntimeMind.',
+    title: 'Articles - Tech Tutorials & Programming Guides | RuntimeMind',
+    description: 'Explore our collection of in-depth tech articles, programming tutorials, and software development guides.',
+    url: 'https://runtimemind.com/articles',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Articles | RuntimeMind',
+    description: 'Explore our collection of in-depth tech articles and programming tutorials.',
   },
 };
 
@@ -85,7 +96,7 @@ export default async function BlogPage() {
               <div className="grid lg:grid-cols-2 gap-8">
                 {/* Main Featured Post */}
                 {featuredPost && (
-                  <Link href={`/blog/${featuredPost.slug}`} className="group block">
+                  <Link href={`/articles/${featuredPost.slug}`} className="group block">
                     <article className="h-full">
                       <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-5 bg-surface-inset">
                         {featuredPost.cover_image_url ? (
@@ -149,7 +160,7 @@ export default async function BlogPage() {
                 {/* Secondary Posts Stack */}
                 <div className="flex flex-col gap-6">
                   {secondaryPosts.map((post, index) => (
-                    <Link key={post.id} href={`/blog/${post.slug}`} className="group block">
+                    <Link key={post.id} href={`/articles/${post.slug}`} className="group block">
                       <article className="flex gap-5 p-4 rounded-xl border border-border hover:border-accent/30 hover:bg-surface transition-all">
                         {post.cover_image_url && (
                           <div className="relative w-28 h-28 rounded-lg overflow-hidden bg-surface-inset flex-shrink-0">
@@ -220,7 +231,7 @@ export default async function BlogPage() {
               <p className="text-text-muted mb-4">Want to explore more?</p>
               <div className="flex flex-wrap justify-center gap-4">
                 <Link
-                  href="/blog/series"
+                  href="/series"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors"
                 >
                   Browse Series

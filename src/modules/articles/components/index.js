@@ -10,3 +10,5 @@ export { SeriesNavigation } from './series-navigation';
 export { SeriesBanner } from './series-banner';
 export { RelatedPosts } from './related-posts';
 export { ShareButtons, ShareSection } from './share-buttons';
+export { CommentsSection } from './comments-section';
+export { LikeButton, LikeIndicator } from './like-button';

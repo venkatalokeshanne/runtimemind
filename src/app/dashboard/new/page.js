@@ -28,7 +28,7 @@ import {
   Star
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { createPost, uploadCoverImage, getSeriesForSelect } from '@/modules/blog/services';
+import { createPost, uploadCoverImage, getSeriesForSelect } from '@/modules/articles/services';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Editor } from '@/ui/Editor/Editor';
@@ -573,7 +573,7 @@ function PublishPanel({
             <p className="text-xs text-text-muted mb-2">Search Preview</p>
             <div className="space-y-1">
               <p className="text-sm font-medium text-blue-600 line-clamp-1">{seoTitle || title || 'Post Title'}</p>
-              <p className="text-xs text-green-700">runtimemind.com/blog/post-slug</p>
+              <p className="text-xs text-green-700">runtimemind.com/articles/post-slug</p>
               <p className="text-xs text-text-secondary line-clamp-2">{seoDescription || excerpt || 'Post description will appear here...'}</p>
             </div>
           </div>

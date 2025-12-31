@@ -26,6 +26,7 @@
  * ============================================================================
  */
 
+import { Suspense } from 'react';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/lib/theme';
 import { AuthProvider } from '@/lib/auth';
@@ -65,29 +66,51 @@ const geistMono = Geist_Mono({
  * - robots configuration for indexing
  */
 export const metadata = {
+  metadataBase: new URL('https://runtimemind.com'),
   title: {
-    default: 'Runtimemind',
-    template: '%s | Runtimemind',
+    default: 'RuntimeMind - Tech Articles & Programming Tutorials',
+    template: '%s | RuntimeMind',
   },
-  description: 'A modern tech blog platform for developers. Clean design, focused reading experience.',
-  keywords: ['tech blog', 'programming', 'software development', 'tutorials', 'technology'],
-  authors: [{ name: 'Runtimemind' }],
-  creator: 'Runtimemind',
+  description: 'Explore in-depth tech articles, programming tutorials, and software development insights. Clean design, focused reading experience for developers.',
+  keywords: ['tech articles', 'programming tutorials', 'software development', 'web development', 'coding', 'technology blog', 'developer resources'],
+  authors: [{ name: 'RuntimeMind', url: 'https://runtimemind.com' }],
+  creator: 'RuntimeMind',
+  publisher: 'RuntimeMind',
+  
+  // Canonical and alternates
+  alternates: {
+    canonical: 'https://runtimemind.com',
+    types: {
+      'application/rss+xml': 'https://runtimemind.com/rss',
+    },
+  },
   
   // Open Graph (Facebook, LinkedIn, etc.)
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    siteName: 'Runtimemind',
-    title: 'Runtimemind',
-    description: 'A modern tech blog platform for developers.',
+    url: 'https://runtimemind.com',
+    siteName: 'RuntimeMind',
+    title: 'RuntimeMind - Tech Articles & Programming Tutorials',
+    description: 'Explore in-depth tech articles, programming tutorials, and software development insights.',
+    images: [
+      {
+        url: '/og-default.png',
+        width: 1200,
+        height: 630,
+        alt: 'RuntimeMind',
+      },
+    ],
   },
   
   // Twitter Card
   twitter: {
     card: 'summary_large_image',
-    title: 'Runtimemind',
-    description: 'A modern tech blog platform for developers.',
+    site: '@runtimemind',
+    creator: '@runtimemind',
+    title: 'RuntimeMind - Tech Articles & Programming Tutorials',
+    description: 'Explore in-depth tech articles, programming tutorials, and software development insights.',
+    images: ['/og-default.png'],
   },
   
   // Robots
@@ -102,6 +125,12 @@ export const metadata = {
       'max-snippet': -1,
     },
   },
+  
+  // Verification (add your IDs when available)
+  // verification: {
+  //   google: 'your-google-verification-id',
+  //   yandex: 'your-yandex-verification-id',
+  // },
 };
 
 /**
@@ -135,6 +164,53 @@ const themeScript = `
   })();
 `;
 
+/**
+ * JSON-LD Structured Data for the entire site
+ * Helps search engines understand the site structure
+ */
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': 'https://runtimemind.com/#website',
+      url: 'https://runtimemind.com',
+      name: 'RuntimeMind',
+      description: 'Tech articles, programming tutorials, and software development insights.',
+      publisher: {
+        '@id': 'https://runtimemind.com/#organization',
+      },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: 'https://runtimemind.com/articles?q={search_term_string}',
+        },
+        'query-input': 'required name=search_term_string',
+      },
+      inLanguage: 'en-US',
+    },
+    {
+      '@type': 'Organization',
+      '@id': 'https://runtimemind.com/#organization',
+      name: 'RuntimeMind',
+      url: 'https://runtimemind.com',
+      logo: {
+        '@type': 'ImageObject',
+        '@id': 'https://runtimemind.com/#logo',
+        url: 'https://runtimemind.com/logo.png',
+        contentUrl: 'https://runtimemind.com/logo.png',
+        caption: 'RuntimeMind',
+      },
+      sameAs: [
+        // Add your social media URLs here
+        // 'https://twitter.com/runtimemind',
+        // 'https://github.com/runtimemind',
+      ],
+    },
+  ],
+};
+
 export default function RootLayout({ children }) {
   return (
     <html 
@@ -144,6 +220,11 @@ export default function RootLayout({ children }) {
       <head>
         {/* Theme initialization - must run before paint */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body
         className={`
@@ -155,14 +236,16 @@ export default function RootLayout({ children }) {
       >
         <ThemeProvider defaultTheme="system">
           <AuthProvider>
-            <SiteHeader siteName="Runtimemind" />
+            <Suspense fallback={<div className="h-16 bg-surface border-b border-border" />}>
+              <SiteHeader siteName="RuntimeMind" />
+            </Suspense>
             
             {/* Main content area - grows to fill space, pt-16 for fixed header */}
             <main className="flex-1 pt-16">
               {children}
             </main>
             
-            <SiteFooter siteName="Runtimemind" />
+            <SiteFooter siteName="RuntimeMind" />
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -20,7 +20,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Heart, MessageSquare } from 'lucide-react';
 import { formatDate, calculateReadingTime } from '@/lib/utils';
 
 export function FeaturedPost({ post }) {
@@ -33,7 +33,7 @@ export function FeaturedPost({ post }) {
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="group"
     >
-      <Link href={`/blog/${post.slug}`} className="block">
+      <Link href={`/articles/${post.slug}`} className="block">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           {/* Image */}
           <div className="relative aspect-[16/10] rounded-[var(--radius-lg)] overflow-hidden bg-surface border border-border">
@@ -74,6 +74,27 @@ export function FeaturedPost({ post }) {
               )}
               <span>·</span>
               <span>{readingTime} min read</span>
+              
+              {/* Engagement stats */}
+              {(post.likes_count > 0 || post.comments_count > 0) && (
+                <>
+                  <span>·</span>
+                  <div className="flex items-center gap-3">
+                    {post.likes_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Heart className="w-3.5 h-3.5" />
+                        {post.likes_count}
+                      </span>
+                    )}
+                    {post.comments_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        {post.comments_count}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Title */}

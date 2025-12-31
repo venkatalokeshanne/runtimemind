@@ -141,14 +141,14 @@ const RuntimeMind = {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link 
-              href="/blog" 
+              href="/articles" 
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors"
             >
               Browse Articles
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link 
-              href="/blog/series" 
+              href="/series" 
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-border text-text-primary font-medium hover:bg-surface transition-colors"
             >
               View Series

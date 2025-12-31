@@ -61,3 +61,21 @@ export {
   getFollowingCount,
   getSuggestedUsers,
 } from './follows';
+
+export {
+  getCommentsByPostId,
+  getCommentCount,
+  createComment,
+  updateComment,
+  deleteComment,
+} from './comments';
+
+export {
+  getLikeCount,
+  hasUserLiked,
+  getPostLikeInfo,
+  likePost,
+  unlikePost,
+  toggleLike,
+  getLikedPostIds,
+} from './likes';

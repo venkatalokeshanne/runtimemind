@@ -20,7 +20,7 @@ import {
   Eye
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { createSeries, uploadCoverImage } from '@/modules/blog/services';
+import { createSeries, uploadCoverImage } from '@/modules/articles/services';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { cn } from '@/lib/utils';

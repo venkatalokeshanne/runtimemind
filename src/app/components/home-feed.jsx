@@ -21,7 +21,7 @@ import {
   getSuggestedUsers,
   getFollowingPosts,
   getTrendingPosts,
-} from '@/modules/blog/services';
+} from '@/modules/articles/services';
 
 /**
  * Feed tabs for filtering content
@@ -73,7 +73,7 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
               </div>
             )}
             <Link 
-              href={`/blog?author=${post.author?.id}`}
+              href={`/articles?author=${post.author?.id}`}
               className="text-sm font-medium text-text-primary hover:text-accent transition-colors"
             >
               {post.author?.name || 'Anonymous'}
@@ -82,7 +82,7 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
               <>
                 <span className="text-text-muted">in</span>
                 <Link 
-                  href={`/blog/series/${post.series.slug}`}
+                  href={`/series/${post.series.slug}`}
                   className="text-sm font-medium text-text-secondary hover:text-accent transition-colors"
                 >
                   {post.series.title}
@@ -92,7 +92,7 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
           </div>
 
           {/* Title & Excerpt */}
-          <Link href={`/blog/${post.slug}`} className="block group/link">
+          <Link href={`/articles/${post.slug}`} className="block group/link">
             <h2 className={`font-bold text-text-primary group-hover/link:text-accent transition-colors mb-2 line-clamp-2 ${featured ? 'text-xl md:text-2xl' : 'text-lg'}`}>
               {post.title}
             </h2>
@@ -134,7 +134,7 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
 
         {/* Thumbnail */}
         {post.cover_image_url && (
-          <Link href={`/blog/${post.slug}`} className="flex-shrink-0">
+          <Link href={`/articles/${post.slug}`} className="flex-shrink-0">
             <div className={`relative overflow-hidden rounded-lg ${featured ? 'w-40 h-40 md:w-52 md:h-40' : 'w-28 h-28 md:w-36 md:h-28'}`}>
               <Image
                 src={post.cover_image_url}
@@ -203,7 +203,7 @@ function Sidebar({ tags, series, userId, suggestedUsers, followStatuses, onToggl
           {series?.slice(0, 2).map((s) => (
             <Link 
               key={s.id}
-              href={`/blog/series/${s.slug}`}
+              href={`/series/${s.slug}`}
               className="block group"
             >
               <div className="flex items-center gap-2 mb-1">
@@ -234,7 +234,7 @@ function Sidebar({ tags, series, userId, suggestedUsers, followStatuses, onToggl
             {tags.slice(0, 7).map((tag) => (
               <Link
                 key={tag.slug}
-                href={`/blog/tag/${tag.slug}`}
+                href={`/articles/tag/${tag.slug}`}
                 className="px-3 py-1.5 rounded-full bg-surface-inset text-text-secondary text-sm hover:bg-accent/10 hover:text-accent transition-colors"
               >
                 {tag.name}
@@ -300,7 +300,7 @@ function Sidebar({ tags, series, userId, suggestedUsers, followStatuses, onToggl
             {userBookmarks.slice(0, 3).map((bookmark) => (
               <Link 
                 key={bookmark.id} 
-                href={`/blog/${bookmark.post?.slug}`}
+                href={`/articles/${bookmark.post?.slug}`}
                 className="block group"
               >
                 <h4 className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors line-clamp-2">

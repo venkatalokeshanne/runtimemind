@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Layers, ArrowRight, BookOpen } from 'lucide-react';
-import { getSeriesForPost } from '@/modules/blog/services';
+import { getSeriesForPost } from '@/modules/articles/services';
 
 /**
  * SeriesBanner - A subtle banner shown when a post is part of a series
@@ -64,7 +64,7 @@ export function SeriesBanner({ postId }) {
         </div>
 
         <Link
-          href={`/blog/series/${series.slug}`}
+          href={`/series/${series.slug}`}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] text-sm font-medium hover:bg-[var(--brand-primary)]/20 transition-colors"
         >
           <BookOpen className="w-4 h-4" />

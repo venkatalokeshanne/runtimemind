@@ -13,7 +13,7 @@
  * ============================================================================
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://example.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://runtimemind.com';
 
 /**
  * Generate robots.txt content
@@ -27,12 +27,15 @@ export default function robots() {
         userAgent: '*',
         allow: '/',
         disallow: [
-          '/api/',      // API routes
-          '/admin/',    // Admin area (if added later)
-          '/_next/',    // Next.js internals
+          '/api/',        // API routes
+          '/dashboard/',  // Dashboard (private)
+          '/login',       // Auth pages
+          '/signup',      // Auth pages
+          '/_next/',      // Next.js internals
         ],
       },
     ],
     sitemap: `${BASE_URL}/sitemap.xml`,
+    host: BASE_URL,
   };
 }

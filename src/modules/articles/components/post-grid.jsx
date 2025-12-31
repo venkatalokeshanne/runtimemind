@@ -57,7 +57,7 @@ function PostGridItem({ post }) {
 
   return (
     <motion.article variants={itemVariants} className="group h-full">
-      <Link href={`/blog/${post.slug}`} className="block h-full flex flex-col">
+      <Link href={`/articles/${post.slug}`} className="block h-full flex flex-col">
         {/* Image */}
         <div className="relative aspect-[16/10] mb-4 rounded-xl overflow-hidden bg-surface border border-border group-hover:border-accent/30 transition-colors">
           {post.cover_image_url ? (

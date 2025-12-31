@@ -7,7 +7,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Feather, BookOpen, Sparkles, Clock, Layers, Users, PenTool, Bookmark, ArrowUpRight } from 'lucide-react';
-import { getPublishedPosts, getTrendingTags, getPublishedSeries } from '@/modules/blog/services';
+import { getPublishedPosts, getTrendingTags, getPublishedSeries } from '@/modules/articles/services';
 import { Button } from '@/ui/button';
 import { HomePageClient } from './components/home-page-client';
 
@@ -59,7 +59,7 @@ export default async function HomePage() {
                 {tags.map((tag) => (
                   <Link
                     key={tag.slug}
-                    href={`/blog/tag/${tag.slug}`}
+                    href={`/articles/tag/${tag.slug}`}
                     className="px-3 py-1 rounded-full bg-surface-inset text-text-secondary border border-border text-xs hover:bg-accent/10 hover:text-accent transition-colors"
                   >
                     #{tag.name}
@@ -84,7 +84,7 @@ export default async function HomePage() {
               </div>
             </div>
             <Link 
-              href="/blog"
+              href="/articles"
               className="text-sm font-medium text-accent hover:text-accent-hover transition-colors inline-flex items-center gap-1 group"
             >
               All articles
@@ -99,7 +99,7 @@ export default async function HomePage() {
               {/* Featured Post */}
               {featuredPost && (
                 <Link 
-                  href={`/blog/${featuredPost.slug}`}
+                  href={`/articles/${featuredPost.slug}`}
                   className="group relative rounded-2xl overflow-hidden bg-surface border border-border hover:border-accent/50 transition-all duration-300 min-h-[300px]"
                 >
                   {featuredPost.cover_image_url ? (
@@ -153,7 +153,7 @@ export default async function HomePage() {
                 {recentPosts.slice(6, 8).map((post) => (
                   <Link 
                     key={post.id}
-                    href={`/blog/${post.slug}`}
+                    href={`/articles/${post.slug}`}
                     className="group relative rounded-2xl overflow-hidden bg-surface border border-border hover:border-accent/50 transition-all duration-300 hover:-translate-y-1 min-h-[180px]"
                   >
                     {post.cover_image_url ? (
@@ -187,7 +187,7 @@ export default async function HomePage() {
                 {recentPosts.slice(0, 2).map((post) => (
                   <Link 
                     key={post.id}
-                    href={`/blog/${post.slug}`}
+                    href={`/articles/${post.slug}`}
                     className="group relative rounded-2xl overflow-hidden bg-surface border border-border hover:border-accent/50 transition-all duration-300 hover:-translate-y-1 min-h-[180px]"
                   >
                     {post.cover_image_url ? (
@@ -218,7 +218,7 @@ export default async function HomePage() {
                 {recentPosts.slice(2, 6).map((post, idx) => (
                   <Link 
                     key={post.id}
-                    href={`/blog/${post.slug}`}
+                    href={`/articles/${post.slug}`}
                     className="group flex items-center gap-4 p-4 rounded-xl bg-surface border border-border hover:border-accent/50 hover:bg-surface-elevated transition-all duration-200"
                   >
                     <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent font-bold text-sm">
@@ -260,7 +260,7 @@ export default async function HomePage() {
                 </div>
               </div>
               <Link 
-                href="/blog/series"
+                href="/series"
                 className="text-sm font-medium text-accent hover:text-accent-hover transition-colors inline-flex items-center gap-1 group"
               >
                 Browse all
@@ -273,7 +273,7 @@ export default async function HomePage() {
               {series.map((s) => (
                 <Link
                   key={s.id}
-                  href={`/blog/series/${s.slug}`}
+                  href={`/series/${s.slug}`}
                   className="group relative"
                 >
                   {/* Book spine effect */}
@@ -361,7 +361,7 @@ export default async function HomePage() {
               return (
                 <Link
                   key={tag.slug}
-                  href={`/blog/tag/${tag.slug}`}
+                  href={`/articles/tag/${tag.slug}`}
                   className="group relative p-6 rounded-2xl overflow-hidden border border-border hover:border-accent/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${gradients[idx % gradients.length]} opacity-50 group-hover:opacity-80 transition-opacity`} />
@@ -469,7 +469,7 @@ export default async function HomePage() {
             {recentPosts.slice(0, 3).map((post) => (
               <Link 
                 key={post.id}
-                href={`/blog/${post.slug}`}
+                href={`/articles/${post.slug}`}
                 className="group flex flex-col rounded-2xl overflow-hidden bg-surface border border-border hover:border-accent/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="relative h-48 overflow-hidden">
@@ -578,7 +578,7 @@ export default async function HomePage() {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link href="/blog">
+                <Link href="/articles">
                   Explore Articles
                 </Link>
               </Button>

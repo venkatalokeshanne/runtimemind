@@ -24,7 +24,7 @@ import {
   Layers
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { getUserSeries, deleteSeries } from '@/modules/blog/services';
+import { getUserSeries, deleteSeries } from '@/modules/articles/services';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { cn } from '@/lib/utils';
@@ -272,7 +272,7 @@ function SeriesCard({ series, onDelete }) {
                         Edit
                       </Link>
                       <Link
-                        href={`/blog/series/${series.slug}`}
+                        href={`/series/${series.slug}`}
                         className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-hover"
                         onClick={() => setMenuOpen(false)}
                       >

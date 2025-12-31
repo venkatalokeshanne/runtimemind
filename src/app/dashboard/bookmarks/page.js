@@ -13,7 +13,7 @@ import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Bookmark, Clock, Trash2, FileText, Layers } from 'lucide-react';
 import { Button } from '@/ui/button';
-import { getUserBookmarks, removeBookmark, getUserSeriesBookmarks, removeSeriesBookmark } from '@/modules/blog/services';
+import { getUserBookmarks, removeBookmark, getUserSeriesBookmarks, removeSeriesBookmark } from '@/modules/articles/services';
 
 /**
  * Bookmark Card Component (for posts)
@@ -50,7 +50,7 @@ function BookmarkCard({ post, onRemove }) {
               </div>
             )}
             <Link 
-              href={`/blog?author=${post.author?.id}`}
+              href={`/articles?author=${post.author?.id}`}
               className="text-sm font-medium text-text-primary hover:text-accent transition-colors"
             >
               {post.author?.name || 'Anonymous'}
@@ -58,7 +58,7 @@ function BookmarkCard({ post, onRemove }) {
           </div>
 
           {/* Title & Excerpt */}
-          <Link href={`/blog/${post.slug}`} className="block group/link">
+          <Link href={`/articles/${post.slug}`} className="block group/link">
             <h2 className="font-bold text-lg text-text-primary group-hover/link:text-accent transition-colors mb-2 line-clamp-2">
               {post.title}
             </h2>
@@ -96,7 +96,7 @@ function BookmarkCard({ post, onRemove }) {
 
         {/* Thumbnail */}
         {post.cover_image_url && (
-          <Link href={`/blog/${post.slug}`} className="flex-shrink-0">
+          <Link href={`/articles/${post.slug}`} className="flex-shrink-0">
             <div className="relative w-28 h-28 md:w-36 md:h-28 overflow-hidden rounded-lg">
               <Image
                 src={post.cover_image_url}
@@ -155,7 +155,7 @@ function SeriesBookmarkCard({ series, onRemove }) {
           </div>
 
           {/* Title & Description */}
-          <Link href={`/blog/series/${series.slug}`} className="block group/link">
+          <Link href={`/series/${series.slug}`} className="block group/link">
             <h2 className="font-bold text-lg text-text-primary group-hover/link:text-accent transition-colors mb-2 line-clamp-2">
               {series.title}
             </h2>
@@ -187,7 +187,7 @@ function SeriesBookmarkCard({ series, onRemove }) {
 
         {/* Thumbnail */}
         {series.cover_image_url && (
-          <Link href={`/blog/series/${series.slug}`} className="flex-shrink-0">
+          <Link href={`/series/${series.slug}`} className="flex-shrink-0">
             <div className="relative w-28 h-28 md:w-36 md:h-28 overflow-hidden rounded-lg">
               <Image
                 src={series.cover_image_url}
@@ -322,7 +322,7 @@ export default function BookmarksPage() {
             <p className="text-text-muted mb-6">
               Click the bookmark icon on any article to save it for later.
             </p>
-            <Button onClick={() => router.push('/blog')}>
+            <Button onClick={() => router.push('/articles')}>
               Browse articles
             </Button>
           </div>
@@ -335,7 +335,7 @@ export default function BookmarksPage() {
             <p className="text-text-muted mb-6">
               Click the bookmark icon on any series to save it for later.
             </p>
-            <Button onClick={() => router.push('/blog/series')}>
+            <Button onClick={() => router.push('/series')}>
               Browse series
             </Button>
           </div>

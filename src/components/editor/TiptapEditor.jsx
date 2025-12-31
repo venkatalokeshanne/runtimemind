@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
-import { uploadImage } from '@/modules/blog/services';
+import { uploadImage } from '@/modules/articles/services';
 import { Button } from '@/ui/button';
 
 export default function TiptapEditor({ value = '', onChange, authorId }) {

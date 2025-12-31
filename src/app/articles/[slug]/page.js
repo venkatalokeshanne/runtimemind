@@ -8,7 +8,7 @@
  * ARCHITECTURE:
  * 
  * 1. DYNAMIC ROUTE:
- *    [slug] creates pages like /blog/my-post-title
+ *    [slug] creates pages like /articles/my-post-title
  *    Slugs are SEO-friendly (keywords in URL)
  * 
  * 2. STATIC GENERATION:
@@ -23,8 +23,8 @@
  */
 
 import { notFound } from 'next/navigation';
-import { getPostBySlug, getAllPostSlugs } from '@/modules/blog/services';
-import { PostContent } from '@/modules/blog/components';
+import { getPostBySlug, getAllPostSlugs } from '@/modules/articles/services';
+import { PostContent } from '@/modules/articles/components';
 
 /**
  * Generate static paths for all posts at build time.
@@ -72,7 +72,10 @@ export async function generateMetadata({ params }) {
   // Use SEO fields if available, fall back to default values
   const metaTitle = post.seo_title || post.title;
   const metaDescription = post.seo_description || post.excerpt || `Read "${post.title}" on Ink Blog.`;
-  const canonicalUrl = `https://runtimemind.com/blog/${slug}`;
+  const canonicalUrl = `https://runtimemind.com/articles/${slug}`;
+  
+  // Use cover image or generate placeholder from title
+  const ogImage = post.cover_image_url || `https://runtimemind.com/api/og?title=${encodeURIComponent(post.title)}&type=article&author=${encodeURIComponent(post.author?.name || '')}`;
   
   return {
     title: metaTitle,
@@ -107,20 +110,13 @@ export async function generateMetadata({ params }) {
       modifiedTime: post.updated_at,
       authors: post.author ? [post.author.name] : [],
       tags: post.tags || [],
-      images: post.cover_image_url ? [
+      images: [
         {
-          url: post.cover_image_url,
+          url: ogImage,
           width: 1200,
           height: 630,
           alt: metaTitle,
-          type: 'image/jpeg',
-        }
-      ] : [
-        {
-          url: 'https://runtimemind.com/og-default.png',
-          width: 1200,
-          height: 630,
-          alt: 'RuntimeMind Blog',
+          type: 'image/png',
         }
       ],
     },
@@ -132,7 +128,7 @@ export async function generateMetadata({ params }) {
       description: metaDescription,
       site: '@runtimemind',
       creator: post.author?.twitter_handle || '@runtimemind',
-      images: post.cover_image_url ? [post.cover_image_url] : ['https://runtimemind.com/og-default.png'],
+      images: [ogImage],
     },
   };
 }
@@ -142,6 +138,42 @@ export async function generateMetadata({ params }) {
  * Allows updates to reflect without full rebuild
  */
 export const revalidate = 60;
+
+/**
+ * Generate Article JSON-LD structured data
+ */
+function generateArticleJsonLd(post, slug) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.seo_title || post.title,
+    description: post.seo_description || post.excerpt,
+    image: post.cover_image_url || 'https://runtimemind.com/og-default.png',
+    datePublished: post.published_at,
+    dateModified: post.updated_at || post.published_at,
+    author: {
+      '@type': 'Person',
+      name: post.author?.name || 'RuntimeMind',
+      url: 'https://runtimemind.com',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'RuntimeMind',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://runtimemind.com/logo.png',
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://runtimemind.com/articles/${slug}`,
+    },
+    keywords: post.tags?.join(', ') || '',
+    wordCount: post.content ? post.content.replace(/<[^>]*>/g, '').split(/\s+/).length : 0,
+    articleSection: 'Technology',
+    inLanguage: 'en-US',
+  };
+}
 
 /**
  * Post Page Component
@@ -178,9 +210,18 @@ export default async function PostPage({ params, searchParams }) {
     );
   }
 
+  const articleJsonLd = generateArticleJsonLd(post, slug);
+
   return (
-    <div className="container mx-auto px-4 py-12 md:py-16">
-      <PostContent post={post} fromSeries={fromSeries} />
-    </div>
+    <>
+      {/* Article JSON-LD for rich search results */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <div className="container mx-auto px-4 py-12 md:py-16">
+        <PostContent post={post} fromSeries={fromSeries} />
+      </div>
+    </>
   );
 }

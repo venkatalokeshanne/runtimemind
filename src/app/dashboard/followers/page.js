@@ -19,7 +19,7 @@ import {
   toggleFollow,
   getFollowerCount,
   getFollowingCount,
-} from '@/modules/blog/services';
+} from '@/modules/articles/services';
 
 /**
  * User Card Component
@@ -43,7 +43,7 @@ function UserCard({ user, currentUserId, isFollowing: initialFollowing, showFoll
 
   return (
     <div className="flex items-center justify-between py-4 border-b border-border last:border-0">
-      <Link href={`/blog?author=${user.id}`} className="flex items-center gap-3 group">
+      <Link href={`/articles?author=${user.id}`} className="flex items-center gap-3 group">
         {user.avatar_url ? (
           <Image
             src={user.avatar_url}

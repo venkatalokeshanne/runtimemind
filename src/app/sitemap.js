@@ -17,13 +17,13 @@
  * ============================================================================
  */
 
-import { getAllPostSlugs } from '@/modules/blog/services';
+import { getAllPostSlugs, getPublishedSeries } from '@/modules/articles/services';
 
 /**
  * Base URL for the site
  * In production, this should come from environment variable
  */
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://example.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://runtimemind.com';
 
 /**
  * Generate sitemap entries
@@ -40,9 +40,15 @@ export default async function sitemap() {
       priority: 1,
     },
     {
-      url: `${BASE_URL}/blog`,
+      url: `${BASE_URL}/articles`,
       lastModified: new Date(),
       changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${BASE_URL}/series`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
@@ -53,15 +59,25 @@ export default async function sitemap() {
     },
   ];
 
-  // Dynamic blog post pages
+  // Dynamic article pages
   const { data: posts } = await getAllPostSlugs();
   
   const postPages = (posts || []).map((post) => ({
-    url: `${BASE_URL}/blog/${post.slug}`,
-    lastModified: new Date(),
+    url: `${BASE_URL}/articles/${post.slug}`,
+    lastModified: post.updated_at ? new Date(post.updated_at) : new Date(),
     changeFrequency: 'weekly',
     priority: 0.8,
   }));
 
-  return [...staticPages, ...postPages];
+  // Dynamic series pages
+  const { data: seriesList } = await getPublishedSeries();
+  
+  const seriesPages = (seriesList || []).map((series) => ({
+    url: `${BASE_URL}/series/${series.slug}`,
+    lastModified: series.updated_at ? new Date(series.updated_at) : new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.85,
+  }));
+
+  return [...staticPages, ...postPages, ...seriesPages];
 }

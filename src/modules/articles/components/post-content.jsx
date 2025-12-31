@@ -28,6 +28,8 @@ import { SeriesNavigation } from './series-navigation';
 import { SeriesBanner } from './series-banner';
 import { RelatedPosts } from './related-posts';
 import { ShareSection } from './share-buttons';
+import { CommentsSection } from './comments-section';
+import { LikeButton } from './like-button';
 import { EditorContent } from '@/ui/Editor';
 
 /**
@@ -80,13 +82,22 @@ export function PostContent({ post, fromSeries = false }) {
 
           {/* Reading time */}
           <span>{readingTime} min read</span>
+
+          <span aria-hidden="true">·</span>
+
+          {/* Like button */}
+          <LikeButton 
+            postId={post.id} 
+            initialCount={post.likes_count || 0}
+            size="default"
+          />
         </div>
 
         {/* Share Buttons */}
         <div className="mt-4 pt-4 border-t border-border">
           <ShareSection 
             title={post.title}
-            url={typeof window !== 'undefined' ? window.location.href : `https://runtimemind.com/blog/${post.slug}`}
+            url={typeof window !== 'undefined' ? window.location.href : `https://runtimemind.com/articles/${post.slug}`}
             description={post.excerpt}
           />
         </div>
@@ -133,6 +144,12 @@ export function PostContent({ post, fromSeries = false }) {
           />
         </>
       )}
+
+      {/* Comments Section */}
+      <CommentsSection 
+        postId={post.id} 
+        initialCount={post.comments_count || 0} 
+      />
 
       {/* Author Bio (optional footer) */}
       {post.author?.bio && (

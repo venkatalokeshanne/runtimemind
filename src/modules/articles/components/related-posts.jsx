@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowRight, Clock, Layers } from 'lucide-react';
-import { getRelatedPosts } from '@/modules/blog/services';
+import { getRelatedPosts } from '@/modules/articles/services';
 
 export function RelatedPosts({ postId, seriesId, currentSlug }) {
   const [posts, setPosts] = useState([]);
@@ -53,7 +53,7 @@ export function RelatedPosts({ postId, seriesId, currentSlug }) {
             className="group h-full"
           >
             <Link
-              href={`/blog/${post.slug}`}
+              href={`/articles/${post.slug}`}
               className="h-full flex gap-5 p-5 rounded-xl bg-[var(--brand-surface)] border border-[var(--brand-border)] hover:border-[var(--brand-primary)]/30 hover:shadow-lg transition-all duration-300"
             >
               {/* Thumbnail */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -15,8 +15,8 @@ import {
   User,
   Share2
 } from 'lucide-react';
-import { getSeriesBySlug, getPostsInSeries } from '@/modules/blog/services';
-import { ShareButtons } from '@/modules/blog/components';
+import { getSeriesBySlug, getPostsInSeries } from '@/modules/articles/services';
+import { ShareButtons } from '@/modules/articles/components';
 
 // Post Item Component
 function PostItem({ post, index, isFirst, isLast }) {
@@ -34,7 +34,7 @@ function PostItem({ post, index, isFirst, isLast }) {
       </div>
 
       <Link
-        href={`/blog/${post.slug}?from=series`}
+        href={`/articles/${post.slug}?from=series`}
         className="flex items-start gap-6 pl-14 pr-6 py-6 rounded-2xl bg-[var(--brand-surface)] border border-[var(--brand-border)] hover:border-[var(--brand-primary)]/30 hover:shadow-lg hover:shadow-[var(--brand-primary)]/5 transition-all duration-300"
       >
         {/* Part Number */}
@@ -85,10 +85,7 @@ function PostItem({ post, index, isFirst, isLast }) {
   );
 }
 
-export default function SeriesDetailPage({ params }) {
-  const resolvedParams = use(params);
-  const slug = resolvedParams.slug;
-  
+export default function SeriesClient({ slug }) {
   const [series, setSeries] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -154,7 +151,7 @@ export default function SeriesDetailPage({ params }) {
           <h1 className="text-2xl font-bold text-[var(--brand-text)] mb-4">Series Not Found</h1>
           <p className="text-[var(--brand-muted)] mb-8">The series you're looking for doesn't exist or has been removed.</p>
           <Link 
-            href="/blog/series"
+            href="/series"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--brand-primary)] text-white font-medium hover:opacity-90 transition-opacity"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -190,7 +187,7 @@ export default function SeriesDetailPage({ params }) {
               className="mb-8"
             >
               <Link
-                href="/blog/series"
+                href="/series"
                 className="inline-flex items-center gap-2 text-[var(--brand-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -243,7 +240,7 @@ export default function SeriesDetailPage({ params }) {
 
                 {posts.length > 0 && (
                   <Link
-                    href={`/blog/${posts[0].slug}?from=series`}
+                    href={`/articles/${posts[0].slug}?from=series`}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--brand-primary)] text-white font-medium hover:opacity-90 transition-opacity"
                   >
                     <BookOpen className="w-4 h-4" />
@@ -260,7 +257,7 @@ export default function SeriesDetailPage({ params }) {
                   </span>
                   <ShareButtons 
                     title={series.title}
-                    url={typeof window !== 'undefined' ? window.location.href : `https://runtimemind.com/blog/series/${slug}`}
+                    url={typeof window !== 'undefined' ? window.location.href : `https://runtimemind.com/series/${slug}`}
                     description={series.description}
                   />
                 </div>

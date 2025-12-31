@@ -54,17 +54,17 @@ export function SiteHeader({ siteName = 'Runtimemind' }) {
       return pathname === '/';
     }
     
-    // Series link: active if on /blog/series/* OR if on a blog post coming from series
-    if (href === '/blog/series') {
-      return pathname.startsWith('/blog/series') || 
-             (pathname.startsWith('/blog/') && pathname !== '/blog' && !pathname.startsWith('/blog/series') && fromSeries);
+    // Series link: active if on /series/* OR if on an article coming from series
+    if (href === '/series') {
+      return pathname.startsWith('/series') || 
+             (pathname.startsWith('/articles/') && pathname !== '/articles' && fromSeries);
     }
     
-    // Blog link: active if on /blog or /blog/[slug] (not series), and NOT coming from series
-    if (href === '/blog') {
-      const isOnBlogPost = pathname.startsWith('/blog/') && !pathname.startsWith('/blog/series');
-      const isOnBlogIndex = pathname === '/blog';
-      return (isOnBlogIndex || isOnBlogPost) && !fromSeries;
+    // Articles link: active if on /articles or /articles/[slug], and NOT coming from series
+    if (href === '/articles') {
+      const isOnArticle = pathname.startsWith('/articles/');
+      const isOnArticlesIndex = pathname === '/articles';
+      return (isOnArticlesIndex || isOnArticle) && !fromSeries;
     }
     
     // Default: prefix matching for other links
@@ -96,8 +96,8 @@ export function SiteHeader({ siteName = 'Runtimemind' }) {
   // Conditionally show Reading List (when logged in) or About (when logged out)
   const navLinks = [
     { href: '/', label: 'Home', icon: Home },
-    { href: '/blog', label: 'Blog', icon: BookOpen },
-    { href: '/blog/series', label: 'Series', icon: Layers },
+    { href: '/articles', label: 'Articles', icon: BookOpen },
+    { href: '/series', label: 'Series', icon: Layers },
     ...(user 
       ? [{ href: '/dashboard/bookmarks', label: 'Reading List', icon: BookMarked }]
       : [{ href: '/about', label: 'About', icon: Code2 }]

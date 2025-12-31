@@ -27,6 +27,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { Heart, MessageSquare } from 'lucide-react';
 import { formatDate, calculateReadingTime } from '@/lib/utils';
 
 /**
@@ -58,7 +59,7 @@ export function PostCard({ post, compact = false, large = false }) {
       className={`group ${compact ? 'text-sm' : ''}`}
     >
       <Link 
-        href={`/blog/${post.slug}`}
+        href={`/articles/${post.slug}`}
         className="block"
       >
         {/* Cover Image (optional) */}
@@ -102,7 +103,7 @@ export function PostCard({ post, compact = false, large = false }) {
               </p>
             )}
 
-            {/* Meta: Author, Date, Reading Time */}
+            {/* Meta: Author, Date, Reading Time, Engagement */}
             <div className="flex items-center gap-3 text-sm text-text-muted">
               {/* Author */}
               {post.author && (
@@ -126,6 +127,27 @@ export function PostCard({ post, compact = false, large = false }) {
               
               {/* Reading Time */}
               <span>{readingTime} min read</span>
+
+              {/* Engagement stats (likes and comments) */}
+              {(post.likes_count > 0 || post.comments_count > 0) && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <div className="flex items-center gap-3">
+                    {post.likes_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Heart className="w-3.5 h-3.5" />
+                        {post.likes_count}
+                      </span>
+                    )}
+                    {post.comments_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        {post.comments_count}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

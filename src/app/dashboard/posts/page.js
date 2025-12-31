@@ -26,7 +26,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { getPostsByAuthor, deletePost } from '@/modules/blog/services';
+import { getPostsByAuthor, deletePost } from '@/modules/articles/services';
 import { Button } from '@/ui/button';
 import { formatDate } from '@/lib/utils';
 
@@ -184,7 +184,7 @@ export default function MyPostsPage() {
                 <div className="flex items-center gap-2">
                   {post.published && (
                     <Button variant="ghost" size="icon" asChild>
-                      <Link href={`/blog/${post.slug}`} target="_blank">
+                      <Link href={`/articles/${post.slug}`} target="_blank">
                         <Eye className="w-4 h-4" />
                       </Link>
                     </Button>

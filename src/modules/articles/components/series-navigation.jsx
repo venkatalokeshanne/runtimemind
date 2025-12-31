@@ -10,7 +10,7 @@ import {
   BookOpen,
   ArrowRight 
 } from 'lucide-react';
-import { getSeriesForPost } from '@/modules/blog/services';
+import { getSeriesForPost } from '@/modules/articles/services';
 
 export function SeriesNavigation({ postId }) {
   const [seriesInfo, setSeriesInfo] = useState(null);
@@ -51,7 +51,7 @@ export function SeriesNavigation({ postId }) {
       {/* Series Header */}
       <div className="px-6 py-4 bg-gradient-to-r from-[var(--brand-primary)]/5 to-transparent border-b border-[var(--brand-border)]">
         <Link
-          href={`/blog/series/${series.slug}`}
+          href={`/series/${series.slug}`}
           className="flex items-center gap-3 group"
         >
           <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/20 flex items-center justify-center">
@@ -92,7 +92,7 @@ export function SeriesNavigation({ postId }) {
         {/* Previous */}
         {prevPost ? (
           <Link
-            href={`/blog/${prevPost.slug}?from=series`}
+            href={`/articles/${prevPost.slug}?from=series`}
             className="flex items-center gap-3 px-6 py-5 hover:bg-[var(--brand-background)]/50 transition-colors group"
           >
             <ChevronLeft className="w-5 h-5 text-[var(--brand-muted)] group-hover:text-[var(--brand-primary)] group-hover:-translate-x-1 transition-all" />
@@ -113,7 +113,7 @@ export function SeriesNavigation({ postId }) {
         {/* Next */}
         {nextPost ? (
           <Link
-            href={`/blog/${nextPost.slug}?from=series`}
+            href={`/articles/${nextPost.slug}?from=series`}
             className="flex items-center justify-end gap-3 px-6 py-5 hover:bg-[var(--brand-background)]/50 transition-colors group text-right"
           >
             <div className="min-w-0">
@@ -135,7 +135,7 @@ export function SeriesNavigation({ postId }) {
       {/* View All Parts */}
       <div className="px-6 py-4 border-t border-[var(--brand-border)] bg-[var(--brand-background)]/50">
         <Link
-          href={`/blog/series/${series.slug}`}
+          href={`/series/${series.slug}`}
           className="flex items-center justify-center gap-2 text-sm text-[var(--brand-primary)] font-medium hover:underline"
         >
           <BookOpen className="w-4 h-4" />
