@@ -99,8 +99,14 @@ export function SiteHeader({ siteName = 'Runtimemind' }) {
     { href: '/articles', label: 'Articles', icon: BookOpen },
     { href: '/series', label: 'Series', icon: Layers },
     ...(user 
-      ? [{ href: '/dashboard/bookmarks', label: 'Reading List', icon: BookMarked }]
-      : [{ href: '/about', label: 'About', icon: Code2 }]
+      ? [
+          { href: '/dashboard/bookmarks', label: 'Reading List', icon: BookMarked },
+          { href: '/help', label: 'Docs', icon: FileText }
+        ]
+      : [
+          { href: '/about', label: 'About', icon: Code2 },
+          { href: '/help', label: 'Docs', icon: FileText }
+        ]
     )
   ];
 
