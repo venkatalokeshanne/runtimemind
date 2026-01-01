@@ -37,28 +37,114 @@ export function cn(...inputs) {
 }
 
 /**
- * Formats a date for display in the blog.
+ * Formats a date for display in the blog with robust error handling.
  * 
  * WHY CUSTOM FORMATTING:
  * - Consistent date display across the site
  * - Editorial style (e.g., "December 29, 2025" not "12/29/2025")
  * - Locale-aware but controlled
+ * - Safe handling of null/invalid dates
  * 
  * @param {string|Date} date - Date to format
  * @param {object} options - Intl.DateTimeFormat options
  * @returns {string} - Formatted date string
  */
 export function formatDate(date, options = {}) {
-  const defaultOptions = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  };
+  if (!date) return 'No date';
   
-  return new Intl.DateTimeFormat('en-US', {
-    ...defaultOptions,
-    ...options,
-  }).format(new Date(date));
+  try {
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return 'Invalid date';
+    }
+
+    const defaultOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
+    
+    return new Intl.DateTimeFormat('en-US', {
+      ...defaultOptions,
+      ...options,
+    }).format(dateObj);
+  } catch (error) {
+    console.warn('Date formatting error:', error);
+    return 'Invalid date';
+  }
+}
+
+/**
+ * Formats a date for shorter display (e.g., in lists, cards).
+ * 
+ * @param {string|Date} date - Date to format
+ * @returns {string} - Short formatted date string (e.g., "Jan 1, 2026")
+ */
+export function formatDateShort(date) {
+  return formatDate(date, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+/**
+ * Gets the appropriate date to display for a post (published_at for published, created_at for drafts).
+ * 
+ * @param {object} post - Post object with published, published_at, created_at fields
+ * @returns {string} - The date string to use for display
+ */
+export function getPostDisplayDate(post) {
+  if (!post) return null;
+  return post.published ? post.published_at : post.created_at;
+}
+
+/**
+ * Gets the base URL for the application.
+ * 
+ * @returns {string} - Base URL (e.g., "https://runtimemind.com")
+ */
+export function getBaseUrl() {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  
+  // Fallback for SSR - you should set this environment variable
+  return process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000';
+}
+
+/**
+ * Converts a relative URL to an absolute URL.
+ * 
+ * @param {string} path - Relative or absolute URL path
+ * @returns {string} - Absolute URL
+ */
+export function getAbsoluteUrl(path) {
+  if (!path) return getBaseUrl();
+  
+  // If already absolute, return as-is
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // Ensure path starts with /
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  
+  return `${getBaseUrl()}${cleanPath}`;
+}
+
+/**
+ * Gets the current page's absolute URL.
+ * 
+ * @returns {string} - Current page absolute URL
+ */
+export function getCurrentUrl() {
+  if (typeof window !== 'undefined') {
+    return window.location.href;
+  }
+  return getBaseUrl();
 }
 
 /**

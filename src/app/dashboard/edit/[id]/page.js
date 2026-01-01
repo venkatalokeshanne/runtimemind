@@ -27,7 +27,8 @@ import {
   Settings,
   Tag,
   Search,
-  Star
+  Star,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase/client';
@@ -202,24 +203,60 @@ function TopBar({
   );
 }
 
-function ErrorBanner({ error, onDismiss }) {
+function ErrorToast({ error, onDismiss }) {
+  const [progress, setProgress] = useState(100);
+  
+  useEffect(() => {
+    if (!error) return;
+    
+    // Auto-dismiss after 5 seconds
+    const timer = setTimeout(() => {
+      onDismiss();
+    }, 5000);
+    
+    // Progress bar animation
+    const interval = setInterval(() => {
+      setProgress(prev => Math.max(0, prev - 2));
+    }, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, [error, onDismiss]);
+  
   if (!error) return null;
   
   return (
     <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
-      exit={{ opacity: 0, height: 0 }}
-      className="bg-error/10 border-b border-error/20"
+      initial={{ opacity: 0, x: 100, y: 0 }}
+      animate={{ opacity: 1, x: 0, y: 0 }}
+      exit={{ opacity: 0, x: 100 }}
+      className="fixed z-[100] right-4 bottom-4 md:right-6 md:bottom-auto md:top-24 w-[calc(100%-2rem)] max-w-sm"
     >
-      <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-        <p className="text-sm text-error flex items-center gap-2">
-          <X className="w-4 h-4" />
-          {error}
-        </p>
-        <button onClick={onDismiss} className="text-error hover:text-error/80">
-          <X className="w-4 h-4" />
-        </button>
+      <div className="bg-error/95 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+        <div className="px-4 py-3 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-white">Error</p>
+            <p className="text-sm text-white/90 mt-0.5">{error}</p>
+          </div>
+          <button 
+            onClick={onDismiss} 
+            className="text-white/80 hover:text-white flex-shrink-0 p-1 -mr-1 -mt-1 rounded hover:bg-white/10 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {/* Progress bar */}
+        <div className="h-1 bg-white/20">
+          <motion.div 
+            className="h-full bg-white/50"
+            initial={{ width: '100%' }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.1 }}
+          />
+        </div>
       </div>
     </motion.div>
   );
@@ -363,7 +400,10 @@ function PublishPanel({
   featured,
   setFeatured,
   customReadTime,
-  setCustomReadTime
+  setCustomReadTime,
+  // AI generation
+  onAiGenerateTags,
+  aiGenerating
 }) {
   // Lock body scroll when panel is open
   useEffect(() => {
@@ -516,10 +556,26 @@ function PublishPanel({
 
         {/* Tags Section */}
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-text-primary flex items-center gap-2">
-            <Tag className="w-4 h-4 text-accent" />
-            Tags
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-text-primary flex items-center gap-2">
+              <Tag className="w-4 h-4 text-accent" />
+              Tags
+            </h3>
+            <motion.button
+              onClick={onAiGenerateTags}
+              disabled={aiGenerating === 'tags'}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 hover:from-purple-500/20 hover:to-pink-500/20 transition-all disabled:opacity-50 text-xs font-medium text-purple-600"
+            >
+              {aiGenerating === 'tags' ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
+              AI Generate
+            </motion.button>
+          </div>
           <p className="text-xs text-text-muted">
             Tags help readers find your content.
           </p>
@@ -738,6 +794,8 @@ export default function EditPostPage() {
   const [autoSaved, setAutoSaved] = useState(false);
   const [error, setError] = useState('');
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(null); // 'title' | 'excerpt' | 'tags' | null
+  const [aiSuggestions, setAiSuggestions] = useState(null); // For title suggestions modal
 
   // Computed values
   const plainText = getPlainText(content);
@@ -805,6 +863,49 @@ export default function EditPostPage() {
     }
   }
 
+  // AI Generation function
+  async function handleAiGenerate(type) {
+    if (!plainText || plainText.length < 50) {
+      setError('Write at least 50 characters of content to generate suggestions');
+      return;
+    }
+
+    setAiGenerating(type);
+    setError('');
+
+    try {
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: plainText, type }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate');
+      }
+
+      if (type === 'title') {
+        if (Array.isArray(data.result)) {
+          setAiSuggestions({ type: 'title', options: data.result });
+        } else {
+          setTitle(data.result);
+        }
+      } else if (type === 'excerpt') {
+        setExcerpt(data.result);
+      } else if (type === 'tags') {
+        if (Array.isArray(data.result)) {
+          setTags(data.result.slice(0, 10));
+        }
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to generate content');
+    } finally {
+      setAiGenerating(null);
+    }
+  }
+
   // Cleanup cover preview URL
   useEffect(() => {
     return () => {
@@ -842,14 +943,37 @@ export default function EditPostPage() {
   };
 
   const handleSave = async (publish = null) => {
-    // Validation
-    if (!title.trim()) {
-      setError('Please add a title');
-      return;
-    }
-    if (!plainText) {
-      setError('Please add some content');
-      return;
+    // Determine if we're publishing
+    const isPublishing = publish === true || (publish === null && isPublished);
+    
+    // Validation for publishing
+    if (isPublishing) {
+      if (!title.trim()) {
+        setError('Please add a title for your post');
+        return;
+      }
+      if (title.trim().length < 5) {
+        setError('Title must be at least 5 characters long');
+        return;
+      }
+      if (title.trim().length > 200) {
+        setError('Title must be less than 200 characters');
+        return;
+      }
+      if (!plainText || plainText.trim().length < 100) {
+        setError('Content must be at least 100 characters to publish. Add more content or save as draft.');
+        return;
+      }
+      if (wordCount < 50) {
+        setError('Post must have at least 50 words to publish. Add more content or save as draft.');
+        return;
+      }
+    } else {
+      // Basic validation for drafts
+      if (!title.trim() && !plainText) {
+        setError('Please add a title or some content before saving');
+        return;
+      }
     }
 
     setSaving(true);
@@ -967,9 +1091,9 @@ export default function EditPostPage() {
         isPublished={isPublished}
       />
 
-      {/* Error Banner */}
-      <AnimatePresence>
-        <ErrorBanner error={error} onDismiss={() => setError('')} />
+      {/* Error Toast */}
+      <AnimatePresence mode="wait">
+        {error && <ErrorToast key="error-toast" error={error} onDismiss={() => setError('')} />}
       </AnimatePresence>
 
       {/* Main Content */}
@@ -983,23 +1107,55 @@ export default function EditPostPage() {
             fileInputRef={fileInputRef}
           />
 
-          {/* Title */}
-          <Input
-            type="text"
-            placeholder="Post title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-3xl md:text-4xl font-bold border-0 px-0 h-auto py-2 bg-transparent focus-visible:ring-0 placeholder:text-text-muted/50"
-          />
+          {/* Title with AI button */}
+          <div className="flex items-start gap-2">
+            <Input
+              type="text"
+              placeholder="Post title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="flex-1 text-3xl md:text-4xl font-bold border-0 px-0 h-auto py-2 bg-transparent focus-visible:ring-0 placeholder:text-text-secondary"
+            />
+            <motion.button
+              onClick={() => handleAiGenerate('title')}
+              disabled={aiGenerating === 'title'}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex-shrink-0 mt-3 p-2 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 hover:from-purple-500/20 hover:to-pink-500/20 transition-all disabled:opacity-50"
+              title="Generate title with AI"
+            >
+              {aiGenerating === 'title' ? (
+                <Loader2 className="w-5 h-5 animate-spin text-purple-500" />
+              ) : (
+                <Sparkles className="w-5 h-5 text-purple-500" />
+              )}
+            </motion.button>
+          </div>
 
-          {/* Excerpt */}
-          <Input
-            type="text"
-            placeholder="Write a short excerpt... (optional)"
-            value={excerpt}
-            onChange={(e) => setExcerpt(e.target.value)}
-            className="text-lg border-0 px-0 h-auto py-1 bg-transparent focus-visible:ring-0 placeholder:text-text-muted/50 text-text-secondary"
-          />
+          {/* Excerpt with AI button */}
+          <div className="flex items-start gap-2">
+            <Input
+              type="text"
+              placeholder="Write a short excerpt... (optional)"
+              value={excerpt}
+              onChange={(e) => setExcerpt(e.target.value)}
+              className="flex-1 text-lg border-0 px-0 h-auto py-1 bg-transparent focus-visible:ring-0 placeholder:text-text-secondary text-text-primary"
+            />
+            <motion.button
+              onClick={() => handleAiGenerate('excerpt')}
+              disabled={aiGenerating === 'excerpt'}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex-shrink-0 mt-1 p-1.5 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 hover:from-purple-500/20 hover:to-pink-500/20 transition-all disabled:opacity-50"
+              title="Generate excerpt with AI"
+            >
+              {aiGenerating === 'excerpt' ? (
+                <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
+              ) : (
+                <Sparkles className="w-4 h-4 text-purple-500" />
+              )}
+            </motion.button>
+          </div>
 
           {/* Divider */}
           <hr className="border-border" />
@@ -1040,7 +1196,60 @@ export default function EditPostPage() {
             setFeatured={setFeatured}
             customReadTime={customReadTime}
             setCustomReadTime={setCustomReadTime}
+            onAiGenerateTags={() => handleAiGenerate('tags')}
+            aiGenerating={aiGenerating}
           />
+        )}
+      </AnimatePresence>
+
+      {/* AI Title Suggestions Modal */}
+      <AnimatePresence>
+        {aiSuggestions?.type === 'title' && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+              onClick={() => setAiSuggestions(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl p-6"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-purple-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-text-primary">AI Title Suggestions</h3>
+                  <p className="text-sm text-text-secondary">Choose one or edit manually</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {aiSuggestions.options?.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setTitle(suggestion);
+                      setAiSuggestions(null);
+                    }}
+                    className="w-full text-left p-3 rounded-lg border border-border hover:bg-hover hover:border-accent/50 transition-all text-sm text-text-primary"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setAiSuggestions(null)}
+                className="mt-4 w-full py-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
+              >
+                Cancel
+              </button>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

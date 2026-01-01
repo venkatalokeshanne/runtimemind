@@ -28,9 +28,10 @@ import {
   BookOpen, 
   Code2,
   Home,
-  Settings,
   Layers,
-  BookMarked
+  BookMarked,
+  Settings,
+  BarChart3
 } from 'lucide-react';
 import { ThemeToggle } from '@/lib/theme';
 import { useAuth } from '@/lib/auth';
@@ -338,12 +339,12 @@ export function SiteHeader({ siteName = 'Runtimemind' }) {
                               />
                             ) : (
                               <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-lg font-bold text-white shadow-sm">
-                                {(user?.name || 'U').slice(0,1)}
+                                {(user?.name || user?.email?.split('@')[0] || 'U').slice(0,1).toUpperCase()}
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
                               <div className="font-semibold text-text-primary truncate">
-                                {user?.name || 'Anonymous'}
+                                {user?.name || user?.email?.split('@')[0] || 'User'}
                               </div>
                               <div className="text-sm text-text-secondary truncate">
                                 {user?.email || ''}
@@ -381,6 +382,14 @@ export function SiteHeader({ siteName = 'Runtimemind' }) {
                           >
                             <FileText className="w-5 h-5 text-text-secondary" />
                             <span>My Posts</span>
+                          </Link>
+                          <Link
+                            href="/dashboard/analytics"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-text-primary hover:bg-hover transition-colors"
+                          >
+                            <BarChart3 className="w-5 h-5 text-text-secondary" />
+                            <span>Analytics</span>
                           </Link>
                           <Link
                             href="/dashboard/settings"
@@ -459,7 +468,9 @@ function AccountDropdown({ user, signOut }) {
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/posts', label: 'My Posts', icon: FileText },
+    { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
     { href: '/dashboard/new', label: 'Write Post', icon: PenSquare },
+    { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -507,12 +518,12 @@ function AccountDropdown({ user, signOut }) {
                   />
                 ) : (
                   <div className="w-11 h-11 rounded-full bg-accent flex items-center justify-center text-base font-bold text-white">
-                    {(user?.name || 'U').slice(0,1)}
+                    {(user?.name || user?.email?.split('@')[0] || 'U').slice(0,1).toUpperCase()}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-text-primary truncate">
-                    {user?.name || 'Anonymous'}
+                    {user?.name || user?.email?.split('@')[0] || 'User'}
                   </div>
                   <div className="text-sm text-text-secondary truncate">
                     {user?.email || ''}

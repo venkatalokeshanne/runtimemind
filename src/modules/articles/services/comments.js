@@ -75,24 +75,69 @@ export async function getCommentsByPostId(postId) {
     return { data: comments, error: null };
   }
 
-  const { data, error } = await supabase
-    .from('comments')
-    .select(`
-      id,
-      post_id,
-      author_id,
-      content,
-      parent_id,
-      created_at,
-      updated_at,
-      author:profiles!author_id (
+  try {
+    // First, get the comments
+    const { data: commentsData, error: commentsError } = await supabase
+      .from('comments')
+      .select(`
         id,
-        name,
-        avatar_url
-      )
-    `)
-    .eq('post_id', postId)
-    .order('created_at', { ascending: true });
+        post_id,
+        author_id,
+        content,
+        parent_id,
+        created_at,
+        updated_at
+      `)
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true });
+
+    if (commentsError) {
+      console.error('Error fetching comments:', commentsError);
+      return { data: [], error: commentsError };
+    }
+
+    // Then, get the unique author IDs
+    const authorIds = [...new Set((commentsData || []).map(comment => comment.author_id))];
+    
+    if (authorIds.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // Fetch author profiles separately
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, name, avatar_url')
+      .in('id', authorIds);
+
+    if (profilesError) {
+      console.error('Error fetching author profiles:', profilesError);
+      // Return comments without author data rather than failing
+      return { 
+        data: (commentsData || []).map(comment => ({
+          ...comment,
+          author: null
+        })), 
+        error: null 
+      };
+    }
+
+    // Map profiles to comments
+    const profilesMap = (profilesData || []).reduce((acc, profile) => {
+      acc[profile.id] = profile;
+      return acc;
+    }, {});
+
+    const commentsWithAuthors = (commentsData || []).map(comment => ({
+      ...comment,
+      author: profilesMap[comment.author_id] || null
+    }));
+
+    return { data: commentsWithAuthors, error: null };
+
+  } catch (err) {
+    console.error('Exception in getCommentsByPostId:', err);
+    return { data: [], error: { message: 'Failed to fetch comments' } };
+  }
 
   return { data: data || [], error };
 }
@@ -160,16 +205,28 @@ export async function createComment({ postId, authorId, content, parentId = null
       content,
       parent_id,
       created_at,
-      updated_at,
-      author:profiles!author_id (
-        id,
-        name,
-        avatar_url
-      )
+      updated_at
     `)
     .single();
 
-  return { data, error };
+  if (error) {
+    return { data: null, error };
+  }
+
+  // Fetch author profile separately
+  const { data: authorProfile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, name, avatar_url')
+    .eq('id', authorId)
+    .single();
+
+  // Return comment with author data
+  const commentWithAuthor = {
+    ...data,
+    author: authorProfile || null
+  };
+
+  return { data: commentWithAuthor, error: null };
 }
 
 /**

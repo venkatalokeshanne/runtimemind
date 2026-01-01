@@ -38,42 +38,42 @@
    * ========================================
    * Designed for comfortable daytime reading.
    * Neutral base with warm copper accents.
-   * IMPROVED: Better contrast between layers
+   * IMPROVED: Higher contrast for better readability
    */
   
   /* BACKGROUNDS - Layered surfaces create depth */
-  --brand-background: #F8F8F8;        /* Page background - warm white */
+  --brand-background: #FFFFFF;        /* Page background - pure white */
   --brand-surface: #FFFFFF;           /* Cards, containers - pure white for contrast */
   --brand-surface-elevated: #FFFFFF;  /* Modals, dropdowns - maximum lift */
-  --brand-surface-inset: #F0F0F2;     /* Input fields, code blocks */
+  --brand-surface-inset: #F5F5F7;     /* Input fields, code blocks */
   
-  /* TEXT - Clear hierarchy for scanability */
-  --brand-text-primary: #18181B;      /* Headlines, body - rich black, high contrast */
-  --brand-text-secondary: #52525B;    /* Meta, captions - clearly secondary but readable */
-  --brand-text-muted: #71717A;        /* Placeholders, hints - still visible */
-  --brand-text-inverse: #FAFAFA;      /* Text on dark backgrounds */
+  /* TEXT - High contrast for readability */
+  --brand-text-primary: #111111;      /* Headlines, body - near black, maximum contrast */
+  --brand-text-secondary: #3D3D3D;    /* Meta, captions - dark gray, very readable */
+  --brand-text-muted: #5C5C5C;        /* Placeholders, hints - medium gray, still clear */
+  --brand-text-inverse: #FFFFFF;      /* Text on dark backgrounds */
   
-  /* ACCENT - Terracotta Copper (use sparingly!) */
-  --brand-accent: #B5684B;            /* Links, primary buttons, focus rings */
-  --brand-accent-hover: #9E5A40;      /* Hover state - slightly darker */
-  --brand-accent-subtle: #FDF5F2;     /* Accent tinted backgrounds */
-  --brand-accent-muted: #D4A090;      /* Disabled accent elements */
+  /* ACCENT - Terracotta Copper (brighter, more vivid) */
+  --brand-accent: #C45D35;            /* Links, primary buttons - more vibrant */
+  --brand-accent-hover: #A84D2B;      /* Hover state - darker for feedback */
+  --brand-accent-subtle: #FFF5F2;     /* Accent tinted backgrounds */
+  --brand-accent-muted: #E8A090;      /* Disabled accent elements */
   
   /* BORDERS - Define boundaries clearly */
-  --brand-border: #E4E4E7;            /* Default borders - visible */
-  --brand-border-subtle: #F4F4F5;     /* Very subtle dividers */
-  --brand-border-strong: #A1A1AA;     /* Emphasized borders - much stronger */
+  --brand-border: #D4D4D8;            /* Default borders - more visible */
+  --brand-border-subtle: #E8E8EB;     /* Very subtle dividers */
+  --brand-border-strong: #8C8C94;     /* Emphasized borders - much stronger */
   
   /* FEEDBACK - Semantic colors for status */
-  --brand-success: #16A34A;           /* Success states - brighter green */
-  --brand-success-subtle: #F0FDF4;    /* Success backgrounds */
-  --brand-error: #DC2626;             /* Error states - brighter red */
+  --brand-success: #059669;           /* Success states - rich green */
+  --brand-success-subtle: #ECFDF5;    /* Success backgrounds */
+  --brand-error: #DC2626;             /* Error states - bright red */
   --brand-error-subtle: #FEF2F2;      /* Error backgrounds */
-  --brand-warning: #CA8A04;           /* Warning states */
+  --brand-warning: #D97706;           /* Warning states - vivid amber */
   --brand-warning-subtle: #FFFBEB;    /* Warning backgrounds */
   
   /* HOVER STATE */
-  --brand-hover: #F4F4F5;             /* Hover background for interactive elements */
+  --brand-hover: #F0F0F2;             /* Hover background for interactive elements */
   
   /* TYPOGRAPHY */
   --font-sans: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -113,40 +113,43 @@
  */
 .dark {
   /* BACKGROUNDS */
-  --brand-background: #0F0F10;        /* Deep slate - not pure black */
-  --brand-surface: #18181A;           /* Elevated cards */
-  --brand-surface-elevated: #222224;  /* Modals, dropdowns */
-  --brand-surface-inset: #0A0A0B;     /* Recessed areas, inputs */
+  --brand-background: #0A0A0B;        /* Deep black - true dark */
+  --brand-surface: #141416;           /* Elevated cards */
+  --brand-surface-elevated: #1C1C1F;  /* Modals, dropdowns */
+  --brand-surface-inset: #050506;     /* Recessed areas, inputs */
   
-  /* TEXT */
-  --brand-text-primary: #EBEBED;      /* Main text - soft white */
-  --brand-text-secondary: #9494A0;    /* Secondary - reduced contrast */
-  --brand-text-muted: #5C5C66;        /* Muted - very subtle */
-  --brand-text-inverse: #121214;      /* Dark text on light backgrounds */
+  /* TEXT - Higher contrast for readability */
+  --brand-text-primary: #F5F5F5;      /* Main text - bright white */
+  --brand-text-secondary: #B0B0B8;    /* Secondary - much brighter */
+  --brand-text-muted: #78787F;        /* Muted - still readable */
+  --brand-text-inverse: #0A0A0B;      /* Dark text on light backgrounds */
   
-  /* ACCENT - Lighter copper for dark mode visibility */
-  --brand-accent: #CD7C5C;            /* Lighter terracotta */
-  --brand-accent-hover: #DFA080;      /* Even lighter on hover */
-  --brand-accent-subtle: #1F1614;     /* Dark tinted background */
-  --brand-accent-muted: #7D5244;      /* Disabled state */
+  /* ACCENT - Brighter copper for dark mode */
+  --brand-accent: #E8845C;            /* Brighter terracotta */
+  --brand-accent-hover: #F09A74;      /* Even lighter on hover */
+  --brand-accent-subtle: #1F1410;     /* Dark tinted background */
+  --brand-accent-muted: #8D5C48;      /* Disabled state */
   
-  /* BORDERS */
-  --brand-border: #28282C;            /* Default borders */
-  --brand-border-subtle: #1E1E22;     /* Subtle dividers */
-  --brand-border-strong: #38383E;     /* Emphasized borders */
+  /* BORDERS - More visible */
+  --brand-border: #2A2A2E;            /* Default borders */
+  --brand-border-subtle: #1F1F23;     /* Subtle dividers */
+  --brand-border-strong: #454550;     /* Emphasized borders */
   
-  /* FEEDBACK */
-  --brand-success: #4ADE80;
-  --brand-success-subtle: #0F1F15;
+  /* FEEDBACK - Vivid colors for dark mode */
+  --brand-success: #34D399;
+  --brand-success-subtle: #0D1F17;
   --brand-error: #F87171;
   --brand-error-subtle: #1F0F0F;
-  --brand-warning: #FACC15;
-  --brand-warning-subtle: #1F1A0F;
+  --brand-warning: #FBBF24;
+  --brand-warning-subtle: #1F1A0D;
+  
+  /* HOVER STATE */
+  --brand-hover: #1E1E22;
   
   /* SHADOWS - More subtle in dark mode */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
 /*

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Share2, Twitter, Linkedin, Link2, Check, Facebook } from 'lucide-react';
+import { getAbsoluteUrl } from '@/lib/utils';
 
 /**
  * Share Buttons Component
@@ -19,21 +20,24 @@ export function ShareButtons({
   const [copied, setCopied] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
+  // Ensure we have an absolute URL for sharing
+  const absoluteUrl = getAbsoluteUrl(url);
+
   // Encode for URLs
   const encodedTitle = encodeURIComponent(title);
-  const encodedUrl = encodeURIComponent(url);
+  const encodedUrl = encodeURIComponent(absoluteUrl);
   const encodedDescription = encodeURIComponent(description || title);
 
   // Share URLs
   const shareUrls = {
-    twitter: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    twitter: `https://twitter.com/intent/tweet?text=${encodedTitle}${description ? `%0A%0A${encodedDescription}` : ''}&url=${encodedUrl}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}&title=${encodedTitle}&summary=${encodedDescription}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedTitle}${description ? `%20-%20${encodedDescription}` : ''}`,
   };
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(absoluteUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {

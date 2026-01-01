@@ -28,7 +28,8 @@ export async function getUserBookmarks(userId, { limit = 20, offset = 0 } = {}) 
         excerpt,
         cover_image_url,
         published_at,
-        author_id
+        author_id,
+        read_time_minutes
       )
     `)
     .eq('user_id', userId)
@@ -80,10 +81,11 @@ export async function isPostBookmarked(userId, postId) {
     .select('id')
     .eq('user_id', userId)
     .eq('post_id', postId)
-    .single();
+    .maybeSingle();
 
-  if (error && error.code !== 'PGRST116') {
+  if (error) {
     console.error('Error checking bookmark:', error);
+    return false;
   }
 
   return !!data;
@@ -252,10 +254,11 @@ export async function isSeriesBookmarked(userId, seriesId) {
     .select('id')
     .eq('user_id', userId)
     .eq('series_id', seriesId)
-    .single();
+    .maybeSingle();
 
-  if (error && error.code !== 'PGRST116') {
+  if (error) {
     console.error('Error checking series bookmark:', error);
+    return false;
   }
 
   return !!data;

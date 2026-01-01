@@ -17,6 +17,7 @@ export {
   getRelatedPosts,
   getFollowingPosts,
   getTrendingPosts,
+  incrementViewCount,
 } from './posts';
 
 export {

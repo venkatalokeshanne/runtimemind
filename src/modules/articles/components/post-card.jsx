@@ -28,7 +28,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Heart, MessageSquare } from 'lucide-react';
-import { formatDate, calculateReadingTime } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 
 /**
  * PostCard Component
@@ -40,11 +40,11 @@ import { formatDate, calculateReadingTime } from '@/lib/utils';
  * @param {string} props.post.excerpt
  * @param {string} props.post.cover_image_url
  * @param {string} props.post.published_at
- * @param {string} props.post.content - For reading time calculation
+ * @param {number} props.post.read_time_minutes - Stored read time in minutes
  * @param {Object} props.post.author
  */
 export function PostCard({ post, compact = false, large = false }) {
-  const readingTime = calculateReadingTime(post.content || '');
+  const readingTime = post.read_time_minutes || 5;
 
   return (
     <motion.article

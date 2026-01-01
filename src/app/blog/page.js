@@ -16,30 +16,19 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, TrendingUp, Clock, Sparkles } from 'lucide-react';
-import { getPublishedPosts, getPublishedPostCount, getTrendingTags } from '@/modules/articles/services';
-import { PostGrid } from '@/modules/articles/components';
-import { formatDate, calculateReadingTime } from '@/lib/utils';
+import { getPublishedPosts, getPublishedPostCount, getTrendingTags } from '@/modules/blog/services';
+import { PostGrid } from '@/modules/blog/components';
+import { formatDate } from '@/lib/utils';
 
 /**
  * Page metadata for SEO
  */
 export const metadata = {
-  title: 'Articles - Tech Tutorials & Programming Guides',
-  description: 'Explore our collection of in-depth tech articles, programming tutorials, and software development guides. Learn web development, coding best practices, and more.',
-  keywords: ['tech articles', 'programming tutorials', 'web development', 'coding guides', 'software development'],
-  alternates: {
-    canonical: 'https://runtimemind.com/articles',
-  },
+  title: 'Blog',
+  description: 'All articles and posts. Explore our collection of thoughtful writing.',
   openGraph: {
-    title: 'Articles - Tech Tutorials & Programming Guides | RuntimeMind',
-    description: 'Explore our collection of in-depth tech articles, programming tutorials, and software development guides.',
-    url: 'https://runtimemind.com/articles',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Articles | RuntimeMind',
-    description: 'Explore our collection of in-depth tech articles and programming tutorials.',
+    title: 'Blog | RuntimeMind',
+    description: 'All articles and posts from RuntimeMind.',
   },
 };
 
@@ -96,7 +85,7 @@ export default async function BlogPage() {
               <div className="grid lg:grid-cols-2 gap-8">
                 {/* Main Featured Post */}
                 {featuredPost && (
-                  <Link href={`/articles/${featuredPost.slug}`} className="group block">
+                  <Link href={`/blog/${featuredPost.slug}`} className="group block">
                     <article className="h-full">
                       <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-5 bg-surface-inset">
                         {featuredPost.cover_image_url ? (
@@ -149,7 +138,7 @@ export default async function BlogPage() {
                           <span>·</span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" />
-                            {featuredPost.read_time_minutes || 5} min read
+                            {featuredPost.read_time_minutes || 5} min
                           </span>
                         </div>
                       </div>
@@ -160,7 +149,7 @@ export default async function BlogPage() {
                 {/* Secondary Posts Stack */}
                 <div className="flex flex-col gap-6">
                   {secondaryPosts.map((post, index) => (
-                    <Link key={post.id} href={`/articles/${post.slug}`} className="group block">
+                    <Link key={post.id} href={`/blog/${post.slug}`} className="group block">
                       <article className="flex gap-5 p-4 rounded-xl border border-border hover:border-accent/30 hover:bg-surface transition-all">
                         {post.cover_image_url && (
                           <div className="relative w-28 h-28 rounded-lg overflow-hidden bg-surface-inset flex-shrink-0">
@@ -180,11 +169,6 @@ export default async function BlogPage() {
                             <span>{post.author?.name}</span>
                             <span>·</span>
                             <time>{formatDate(post.published_at)}</time>
-                            <span>·</span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {post.read_time_minutes || 5} min
-                            </span>
                           </div>
                         </div>
                       </article>
@@ -223,7 +207,7 @@ export default async function BlogPage() {
               <div className="max-w-6xl mx-auto px-6">
                 <div className="flex items-center justify-between mb-8">
                   <h2 className="text-2xl font-bold text-text-primary">All Articles</h2>
-                  <span className="text-sm text-text-muted">{remainingPosts.length} more posts</span>
+                  <span className="text-sm text-text-muted">{posts.length} posts</span>
                 </div>
                 <PostGrid posts={remainingPosts} />
               </div>
@@ -236,7 +220,7 @@ export default async function BlogPage() {
               <p className="text-text-muted mb-4">Want to explore more?</p>
               <div className="flex flex-wrap justify-center gap-4">
                 <Link
-                  href="/series"
+                  href="/blog/series"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors"
                 >
                   Browse Series

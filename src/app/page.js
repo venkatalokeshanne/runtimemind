@@ -141,7 +141,7 @@ export default async function HomePage() {
                       )}
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        5 min read
+                        {featuredPost.read_time_minutes || 5} min read
                       </span>
                     </div>
                   </div>
@@ -507,7 +507,7 @@ export default async function HomePage() {
                     <span>·</span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      5 min
+                      {post.read_time_minutes || 5} min
                     </span>
                   </div>
                 </div>

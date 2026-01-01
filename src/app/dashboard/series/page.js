@@ -201,11 +201,11 @@ function SeriesCard({ series, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="group relative bg-surface rounded-xl border border-border p-4 hover:shadow-md transition-all">
-      <div className="flex gap-4">
+    <div className="group relative bg-surface rounded-xl border border-border p-3 sm:p-4 hover:shadow-md transition-all">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         {/* Cover Image */}
         {series.cover_image_url ? (
-          <div className="w-24 h-24 rounded-lg overflow-hidden shrink-0 bg-surface-inset">
+          <div className="w-full h-32 sm:w-24 sm:h-24 rounded-lg overflow-hidden shrink-0 bg-surface-inset">
             <img
               src={series.cover_image_url}
               alt={series.title}
@@ -213,7 +213,7 @@ function SeriesCard({ series, onDelete }) {
             />
           </div>
         ) : (
-          <div className="w-24 h-24 rounded-lg shrink-0 bg-accent/10 flex items-center justify-center">
+          <div className="w-full h-32 sm:w-24 sm:h-24 rounded-lg shrink-0 bg-accent/10 flex items-center justify-center">
             <BookOpen className="w-8 h-8 text-accent" />
           </div>
         )}
@@ -221,20 +221,20 @@ function SeriesCard({ series, onDelete }) {
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <div>
-              <h3 className="font-semibold text-text-primary truncate group-hover:text-accent transition-colors">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-text-primary break-words sm:truncate group-hover:text-accent transition-colors">
                 {series.title}
               </h3>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex flex-wrap items-center gap-2 mt-1">
                 <span className={cn(
-                  'text-xs px-2 py-0.5 rounded-full',
+                  'text-xs px-2 py-0.5 rounded-full whitespace-nowrap',
                   series.published
                     ? 'bg-success/10 text-success'
                     : 'bg-warning/10 text-warning'
                 )}>
                   {series.published ? 'Published' : 'Draft'}
                 </span>
-                <span className="text-xs text-text-muted flex items-center gap-1">
+                <span className="text-xs text-text-muted flex items-center gap-1 whitespace-nowrap">
                   <FileText className="w-3 h-3" />
                   {series.posts_count || 0} posts
                 </span>
@@ -242,7 +242,7 @@ function SeriesCard({ series, onDelete }) {
             </div>
 
             {/* Actions Menu */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="p-2 rounded-lg hover:bg-hover transition-colors"
@@ -284,7 +284,7 @@ function SeriesCard({ series, onDelete }) {
                           setMenuOpen(false);
                           onDelete();
                         }}
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-error hover:bg-error/10 w-full"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-error hover:bg-error/10 w-full text-left"
                       >
                         <Trash2 className="w-4 h-4" />
                         Delete
@@ -297,7 +297,7 @@ function SeriesCard({ series, onDelete }) {
           </div>
 
           {series.description && (
-            <p className="text-sm text-text-secondary mt-2 line-clamp-2">
+            <p className="text-sm text-text-secondary mt-2 line-clamp-2 break-words">
               {series.description}
             </p>
           )}

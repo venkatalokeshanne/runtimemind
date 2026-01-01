@@ -41,10 +41,10 @@ export async function getPopularAuthors({ limit = 4 } = {}) {
   if (!isSupabaseConfigured) {
     return {
       data: [
-        { id: '1', name: 'Jane Doe', bio: 'Fullstack dev & writer', avatar_url: 'https://randomuser.me/api/portraits/women/1.jpg' },
-        { id: '2', name: 'John Smith', bio: 'Cloud architect', avatar_url: 'https://randomuser.me/api/portraits/men/2.jpg' },
-        { id: '3', name: 'Alice Lee', bio: 'Frontend specialist', avatar_url: 'https://randomuser.me/api/portraits/women/3.jpg' },
-        { id: '4', name: 'Bob Brown', bio: 'Backend engineer', avatar_url: 'https://randomuser.me/api/portraits/men/4.jpg' },
+        { id: '1', name: 'Jane Doe', bio: 'Fullstack dev & writer', avatar_url: 'https://ui-avatars.com/api/?name=Jane+Doe&background=6366f1&color=fff' },
+        { id: '2', name: 'John Smith', bio: 'Cloud architect', avatar_url: 'https://ui-avatars.com/api/?name=John+Smith&background=8b5cf6&color=fff' },
+        { id: '3', name: 'Alice Lee', bio: 'Frontend specialist', avatar_url: 'https://ui-avatars.com/api/?name=Alice+Lee&background=ec4899&color=fff' },
+        { id: '4', name: 'Bob Brown', bio: 'Backend engineer', avatar_url: 'https://ui-avatars.com/api/?name=Bob+Brown&background=14b8a6&color=fff' },
       ].slice(0, limit),
       error: null,
     };
@@ -141,7 +141,12 @@ const POST_LIST_FIELDS = `
   cover_image_url,
   published,
   published_at,
-  author_id
+  created_at,
+  author_id,
+  read_time_minutes,
+  likes_count,
+  comments_count,
+  view_count
 `;
 
 /**
@@ -180,7 +185,7 @@ async function attachAuthorsToPosts(posts = []) {
 
   const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('id, name, bio, avatar_url')
+    .select('id, name, bio, avatar_url, website, linkedin, twitter')
     .in('id', ids);
 
   if (error) {
@@ -275,6 +280,58 @@ export async function getPostBySlug(slug) {
   } catch (e) {
     console.error('Failed to attach author to post:', e);
     return { data, error: null };
+  }
+}
+
+/**
+ * Increment view count for a post.
+ * 
+ * Uses RPC to atomically increment the counter to avoid race conditions.
+ * Falls back to regular update if RPC is not available.
+ * 
+ * @param {string} postId - Post UUID
+ * @returns {Promise<{error: Object|null}>}
+ */
+export async function incrementViewCount(postId) {
+  if (!isSupabaseConfigured || !postId) {
+    return { error: null };
+  }
+
+  try {
+    // Try using RPC for atomic increment (if function exists)
+    const { error: rpcError } = await supabase.rpc('increment_view_count', {
+      post_id: postId
+    });
+
+    // If RPC doesn't exist, fall back to regular update
+    if (rpcError && rpcError.code === 'PGRST202') {
+      // Fetch current count and increment
+      const { data: post } = await supabase
+        .from('posts')
+        .select('view_count')
+        .eq('id', postId)
+        .single();
+
+      const newCount = (post?.view_count || 0) + 1;
+
+      const { error: updateError } = await supabase
+        .from('posts')
+        .update({ view_count: newCount })
+        .eq('id', postId);
+
+      if (updateError) {
+        console.error('Error updating view count:', updateError);
+        return { error: updateError };
+      }
+    } else if (rpcError) {
+      console.error('Error incrementing view count:', rpcError);
+      return { error: rpcError };
+    }
+
+    return { error: null };
+  } catch (e) {
+    console.error('Failed to increment view count:', e);
+    return { error: { message: e.message } };
   }
 }
 
@@ -409,8 +466,39 @@ export async function getPostsByAuthor(authorId, { includeDrafts = false } = {})
  * @returns {Promise<{data: Post|null, error: Object|null}>}
  */
 export async function createPost(input, authorId) {
+  console.log('createPost called with authorId:', authorId);
+  
+  // Check if Supabase is configured
+  if (!isSupabaseConfigured) {
+    console.error('Supabase not configured');
+    return { data: null, error: { message: 'Database not configured' } };
+  }
+  
+  // Validate authorId upfront
+  if (!authorId) {
+    console.error('No authorId provided');
+    return { data: null, error: { message: 'User ID is required' } };
+  }
+  
   // Generate slug from title
   const slug = slugify(input.title);
+  console.log('Generated slug:', slug);
+
+  // Log content size for debugging
+  const contentSize = input.content?.length || 0;
+  console.log('Content size (chars):', contentSize, '(~' + Math.round(contentSize / 1024) + 'KB)');
+
+  // Warn if content is too large (Supabase has limits around 1MB for single inserts)
+  if (contentSize > 500000) {
+    console.warn('Content is very large (>500KB), this may fail');
+    return { 
+      data: null, 
+      error: { 
+        message: 'Content is too large. Please reduce the article size and try again.',
+        code: 'CONTENT_TOO_LARGE'
+      } 
+    };
+  }
 
   const postData = {
     slug,
@@ -431,26 +519,68 @@ export async function createPost(input, authorId) {
     read_time_minutes: input.read_time_minutes || 1,
   };
 
-  const { data, error } = await supabase
-    .from('posts')
-    .insert(postData)
-    .select()
-    .single();
-
-  if (error) {
-    // Duplicate slug
-    if (error.code === '23505') {
-      return { 
-        data: null, 
-        error: { message: 'A post with this title already exists', code: 'DUPLICATE' } 
-      };
+  console.log('Inserting post data (size:', JSON.stringify(postData).length, 'bytes)...');
+  
+  try {
+    const startTime = Date.now();
+    
+    // Get current session for auth token
+    console.log('Getting session token...');
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('Session:', session ? 'found' : 'not found', 'in', Date.now() - startTime, 'ms');
+    
+    if (!session?.access_token) {
+      console.error('No access token in session');
+      return { data: null, error: { message: 'Not authenticated. Please log in again.' } };
     }
     
-    console.error('Error creating post:', error);
-    return { data: null, error: { message: 'Failed to create post' } };
+    // Use direct fetch with auth header to bypass any client issues
+    console.log('Making direct fetch request...');
+    const fetchStart = Date.now();
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/posts`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${session.access_token}`,
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify(postData),
+      }
+    );
+    
+    console.log('Fetch completed in', Date.now() - fetchStart, 'ms, status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Insert failed:', response.status, errorText);
+      
+      // Parse error if JSON
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.code === '23505') {
+          return { data: null, error: { message: 'A post with this title already exists', code: 'DUPLICATE' } };
+        }
+        if (errorJson.code === '42501' || errorJson.message?.includes('policy')) {
+          return { data: null, error: { message: 'Permission denied. Please log in again.', code: 'RLS_ERROR' } };
+        }
+        return { data: null, error: { message: errorJson.message || 'Failed to create post' } };
+      } catch {
+        return { data: null, error: { message: errorText || 'Failed to create post' } };
+      }
+    }
+    
+    const result = await response.json();
+    const data = Array.isArray(result) ? result[0] : result;
+    
+    console.log('Insert result - data:', data?.id);
+    return { data, error: null };
+  } catch (err) {
+    console.error('Insert exception:', err.name, err.message);
+    return { data: null, error: { message: err.message || 'Failed to create post' } };
   }
-
-  return { data, error: null };
 }
 
 /**
@@ -751,4 +881,112 @@ export async function getTrendingPosts({ limit = 10, offset = 0 } = {}) {
   // For now, trending = most recent published posts
   // Could be enhanced with view counts, likes, etc.
   return getPublishedPosts({ limit, offset });
+}
+
+/**
+ * Gets user-specific statistics for dashboard
+ * 
+ * @param {string} userId - User ID to get stats for
+ * @returns {Promise<{data: {totalPosts: number, publishedPosts: number, draftPosts: number, totalViews: number}|null, error: Object|null}>}
+ */
+export async function getUserStats(userId) {
+  if (!userId) {
+    console.warn('getUserStats called without userId');
+    return { data: null, error: { message: 'User ID required' } };
+  }
+
+  // Use mock data if Supabase isn't configured
+  if (!isSupabaseConfigured) {
+    return {
+      data: {
+        totalPosts: 12,
+        publishedPosts: 8,
+        draftPosts: 4,
+        totalViews: 1247,
+        changes: {
+          postsThisMonth: 3,
+          viewsThisWeek: 142
+        }
+      },
+      error: null,
+    };
+  }
+
+  try {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Get total posts count
+    const { count: totalCount, error: totalError } = await supabase
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('author_id', userId);
+
+    if (totalError) {
+      console.error('Error counting total posts:', totalError);
+      return { data: null, error: { message: 'Failed to fetch user stats' } };
+    }
+
+    // Get published posts count
+    const { count: publishedCount, error: publishedError } = await supabase
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('author_id', userId)
+      .eq('published', true);
+
+    if (publishedError) {
+      console.error('Error counting published posts:', publishedError);
+      return { data: null, error: { message: 'Failed to fetch user stats' } };
+    }
+
+    // Get posts created this month
+    const { count: postsThisMonth, error: monthError } = await supabase
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('author_id', userId)
+      .gte('created_at', oneMonthAgo.toISOString());
+
+    if (monthError) {
+      console.error('Error counting posts this month:', monthError);
+    }
+
+    // Get all posts with view counts and creation dates
+    const { data: postsData, error: postsError } = await supabase
+      .from('posts')
+      .select('view_count, created_at')
+      .eq('author_id', userId);
+
+    if (postsError) {
+      console.error('Error fetching posts data:', postsError);
+      return { data: null, error: { message: 'Failed to fetch user stats' } };
+    }
+
+    const totalViews = (postsData || []).reduce((sum, post) => sum + (post.view_count || 0), 0);
+    
+    // Calculate views from posts created this week (as a proxy for "views this week")
+    // In a real app, you'd have a view_logs table with timestamps
+    const viewsThisWeek = (postsData || [])
+      .filter(post => new Date(post.created_at) >= oneWeekAgo)
+      .reduce((sum, post) => sum + (post.view_count || 0), 0);
+
+    const draftCount = (totalCount || 0) - (publishedCount || 0);
+
+    return {
+      data: {
+        totalPosts: totalCount || 0,
+        publishedPosts: publishedCount || 0,
+        draftPosts: draftCount,
+        totalViews: totalViews,
+        changes: {
+          postsThisMonth: postsThisMonth || 0,
+          viewsThisWeek: viewsThisWeek
+        }
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error('Exception while fetching user stats:', err);
+    return { data: null, error: { message: 'Failed to fetch user stats' } };
+  }
 }

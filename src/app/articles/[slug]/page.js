@@ -24,7 +24,7 @@
 
 import { notFound } from 'next/navigation';
 import { getPostBySlug, getAllPostSlugs } from '@/modules/articles/services';
-import { PostContent } from '@/modules/articles/components';
+import { PostContent, ViewTracker } from '@/modules/articles/components';
 
 /**
  * Generate static paths for all posts at build time.
@@ -214,6 +214,9 @@ export default async function PostPage({ params, searchParams }) {
 
   return (
     <>
+      {/* Track view count */}
+      <ViewTracker postId={post.id} />
+      
       {/* Article JSON-LD for rich search results */}
       <script
         type="application/ld+json"

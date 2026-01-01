@@ -21,10 +21,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowRight, Heart, MessageSquare } from 'lucide-react';
-import { formatDate, calculateReadingTime } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 
 export function FeaturedPost({ post }) {
-  const readingTime = calculateReadingTime(post.content || '');
+  const readingTime = post.read_time_minutes || 5;
 
   return (
     <motion.article

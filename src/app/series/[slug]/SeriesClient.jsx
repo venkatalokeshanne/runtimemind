@@ -257,7 +257,7 @@ export default function SeriesClient({ slug }) {
                   </span>
                   <ShareButtons 
                     title={series.title}
-                    url={typeof window !== 'undefined' ? window.location.href : `https://runtimemind.com/series/${slug}`}
+                    url={`/series/${slug}`}
                     description={series.description}
                   />
                 </div>

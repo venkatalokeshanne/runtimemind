@@ -12,3 +12,4 @@ export { RelatedPosts } from './related-posts';
 export { ShareButtons, ShareSection } from './share-buttons';
 export { CommentsSection } from './comments-section';
 export { LikeButton, LikeIndicator } from './like-button';
+export { ViewTracker } from './view-tracker';

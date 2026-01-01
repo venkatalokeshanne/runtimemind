@@ -23,7 +23,8 @@
 
 'use client';
 
-import { formatDate, calculateReadingTime } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
+import { Globe, Linkedin, Twitter } from 'lucide-react';
 import { SeriesNavigation } from './series-navigation';
 import { SeriesBanner } from './series-banner';
 import { RelatedPosts } from './related-posts';
@@ -42,7 +43,7 @@ import { EditorContent } from '@/ui/Editor';
  * @param {boolean} props.fromSeries - Whether user navigated from series page
  */
 export function PostContent({ post, fromSeries = false }) {
-  const readingTime = calculateReadingTime(post.content);
+  const readingTime = post.read_time_minutes || 5;
 
   return (
     <article className="max-w-2xl mx-auto">
@@ -54,7 +55,7 @@ export function PostContent({ post, fromSeries = false }) {
         </h1>
 
         {/* Meta information */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-text-secondary">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-x-4 sm:gap-y-2 text-text-secondary">
           {/* Author */}
           {post.author && (
             <div className="flex items-center gap-2">
@@ -69,36 +70,39 @@ export function PostContent({ post, fromSeries = false }) {
             </div>
           )}
 
-          <span aria-hidden="true" className="hidden md:inline">·</span>
+          <span aria-hidden="true" className="hidden sm:inline">·</span>
 
-          {/* Date */}
-          {post.published_at && (
-            <time dateTime={post.published_at}>
-              {formatDate(post.published_at)}
-            </time>
-          )}
+          {/* Date, Reading time, and Like button grouped on mobile */}
+          <div className="flex items-center gap-x-4 text-sm sm:text-base">
+            {/* Date */}
+            {post.published_at && (
+              <time dateTime={post.published_at}>
+                {formatDate(post.published_at)}
+              </time>
+            )}
 
-          <span aria-hidden="true">·</span>
+            <span aria-hidden="true">·</span>
 
-          {/* Reading time */}
-          <span>{readingTime} min read</span>
+            {/* Reading time */}
+            <span>{readingTime} min read</span>
 
-          <span aria-hidden="true">·</span>
+            <span aria-hidden="true">·</span>
 
-          {/* Like button */}
-          <LikeButton 
-            postId={post.id} 
-            initialCount={post.likes_count || 0}
-            size="default"
-          />
+            {/* Like button */}
+            <LikeButton 
+              postId={post.id} 
+              initialCount={post.likes_count || 0}
+              size="default"
+            />
+          </div>
         </div>
 
         {/* Share Buttons */}
         <div className="mt-4 pt-4 border-t border-border">
           <ShareSection 
             title={post.title}
-            url={typeof window !== 'undefined' ? window.location.href : `https://runtimemind.com/articles/${post.slug}`}
-            description={post.excerpt}
+            url={`/articles/${post.slug}`}
+            description={post.excerpt || post.seo_description || `Read "${post.title}" - a thoughtful article on RuntimeMind.`}
           />
         </div>
       </header>
@@ -162,13 +166,54 @@ export function PostContent({ post, fromSeries = false }) {
                 className="w-12 h-12 rounded-full object-cover"
               />
             )}
-            <div>
+            <div className="flex-1">
               <p className="font-semibold text-text-primary">
                 {post.author.name}
               </p>
               <p className="text-text-secondary mt-1">
                 {post.author.bio}
               </p>
+              {/* Social Links */}
+              {(post.author.website || post.author.twitter || post.author.linkedin) && (
+                <div className="flex items-center gap-3 mt-3">
+                  {post.author.website && (
+                    <a
+                      href={post.author.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-sm text-text-muted hover:text-accent transition-colors"
+                      title="Website"
+                    >
+                      <Globe className="w-4 h-4" />
+                      <span>Website</span>
+                    </a>
+                  )}
+                  {post.author.twitter && (
+                    <a
+                      href={post.author.twitter.startsWith('http') ? post.author.twitter : `https://twitter.com/${post.author.twitter.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-sm text-text-muted hover:text-accent transition-colors"
+                      title="Twitter"
+                    >
+                      <Twitter className="w-4 h-4" />
+                      <span>Twitter</span>
+                    </a>
+                  )}
+                  {post.author.linkedin && (
+                    <a
+                      href={post.author.linkedin.startsWith('http') ? post.author.linkedin : `https://linkedin.com/in/${post.author.linkedin}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-sm text-text-muted hover:text-accent transition-colors"
+                      title="LinkedIn"
+                    >
+                      <Linkedin className="w-4 h-4" />
+                      <span>LinkedIn</span>
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </footer>

@@ -6,21 +6,18 @@
  * Provides authentication state across the app using Supabase Auth.
  * 
  * FEATURES:
- * - Session persistence
+ * - Session persistence with auto-recovery
  * - Auto-refresh tokens
  * - Sign in / Sign up / Sign out methods
  * - Loading states
- * 
- * ARCHITECTURE:
- * Uses React Context to avoid prop drilling auth state.
- * Any component can access auth via useAuth() hook.
+ * - Error recovery and retry logic
  * 
  * ============================================================================
  */
 
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 
 /**
@@ -33,7 +30,31 @@ const AuthContext = createContext({
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},
+  refreshSession: async () => {},
 });
+
+/**
+ * Try to restore session from localStorage immediately (synchronously)
+ */
+function getInitialAuthState() {
+  if (typeof window === 'undefined') return { user: null, session: null };
+  try {
+    const stored = localStorage.getItem('runtimemind-auth');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed?.user && parsed?.access_token) {
+        // Check if token is not expired
+        const expiresAt = parsed.expires_at;
+        if (expiresAt && expiresAt * 1000 > Date.now()) {
+          return { user: parsed.user, session: parsed };
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse stored session:', e);
+  }
+  return { user: null, session: null };
+}
 
 /**
  * Auth Provider Component
@@ -41,46 +62,248 @@ const AuthContext = createContext({
  * Wraps the app to provide auth state everywhere.
  */
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Use lazy initialization to only run getInitialAuthState once
+  const [user, setUser] = useState(() => getInitialAuthState().user);
+  const [session, setSession] = useState(() => getInitialAuthState().session);
+  const [loading, setLoading] = useState(() => !getInitialAuthState().session);
+  const [initialized, setInitialized] = useState(() => !!getInitialAuthState().session);
+  
+  // Prevent race conditions with refs
+  const isMounted = useRef(true);
+  const isRefreshing = useRef(false);
 
+  // Fetch user profile from database and merge with auth user
+  const fetchUserProfile = useCallback(async (authUser) => {
+    if (!authUser) return null;
+
+    // Helper to extract display name from various sources
+    const getDisplayName = (profile, metadata, email) => {
+      // Priority: profile name > metadata name > metadata full_name > email username
+      if (profile?.name) return profile.name;
+      if (metadata?.name) return metadata.name;
+      if (metadata?.full_name) return metadata.full_name;
+      if (email) return email.split('@')[0];
+      return null;
+    };
+
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('name, avatar_url, bio, website')
+        .eq('id', authUser.id)
+        .single();
+
+      if (error) {
+        console.warn('Profile fetch warning:', error.message);
+      }
+
+      // Merge auth user with profile data
+      return {
+        ...authUser,
+        name: getDisplayName(profile, authUser.user_metadata, authUser.email),
+        avatar_url: profile?.avatar_url || authUser.user_metadata?.avatar_url || null,
+        bio: profile?.bio || null,
+        website: profile?.website || null,
+      };
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      // Return auth user with metadata fallback
+      return {
+        ...authUser,
+        name: getDisplayName(null, authUser.user_metadata, authUser.email),
+        avatar_url: authUser.user_metadata?.avatar_url || null,
+      };
+    }
+  }, []);
+
+  // Refresh session manually - call this if session seems stale
+  const refreshSession = useCallback(async () => {
+    if (isRefreshing.current) return;
+    isRefreshing.current = true;
+    
+    try {
+      const { data: { session: refreshedSession }, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        console.error('Session refresh error:', error);
+        // If refresh fails, try getting session from storage
+        const { data: { session: storedSession } } = await supabase.auth.getSession();
+        if (storedSession && isMounted.current) {
+          setSession(storedSession);
+          const enrichedUser = await fetchUserProfile(storedSession.user);
+          setUser(enrichedUser);
+        }
+        return { error };
+      }
+      
+      if (refreshedSession && isMounted.current) {
+        setSession(refreshedSession);
+        const enrichedUser = await fetchUserProfile(refreshedSession.user);
+        setUser(enrichedUser);
+      }
+      
+      return { error: null };
+    } catch (err) {
+      console.error('Unexpected refresh error:', err);
+      return { error: { message: err.message } };
+    } finally {
+      isRefreshing.current = false;
+    }
+  }, [fetchUserProfile]);
+
+  // Initialize auth state
   useEffect(() => {
+    isMounted.current = true;
+    
     // Get initial session
-    async function getInitialSession() {
+    async function initializeAuth() {
       try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        setSession(initialSession);
-        setUser(initialSession?.user || null);
+        // First try to get existing session from Supabase (verifies with server)
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting initial session:', error);
+        }
+        
+        if (!isMounted.current) return;
+        
+        if (initialSession?.user) {
+          setSession(initialSession);
+          // Only fetch profile if we don't have cached user data or it's stale
+          if (!user || user.id !== initialSession.user.id) {
+            const enrichedUser = await fetchUserProfile(initialSession.user);
+            if (isMounted.current) {
+              setUser(enrichedUser);
+            }
+          }
+        } else {
+          setSession(null);
+          setUser(null);
+        }
       } catch (error) {
-        console.error('Error getting session:', error);
+        console.error('Auth initialization error:', error);
+        if (isMounted.current) {
+          setSession(null);
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted.current) {
+          setLoading(false);
+          setInitialized(true);
+        }
       }
     }
 
-    getInitialSession();
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        setSession(currentSession);
-        setUser(currentSession?.user || null);
-        setLoading(false);
+        if (!isMounted.current) return;
+        
+        console.log('Auth state change:', event);
+        
+        // Handle different auth events
+        switch (event) {
+          case 'SIGNED_IN':
+            // Clear any stale user-specific cache when signing in
+            if (currentSession?.user) {
+              setSession(currentSession);
+              const enrichedUser = await fetchUserProfile(currentSession.user);
+              if (isMounted.current) {
+                setUser(enrichedUser);
+              }
+            }
+            break;
+            
+          case 'TOKEN_REFRESHED':
+          case 'USER_UPDATED':
+            if (currentSession?.user) {
+              setSession(currentSession);
+              const enrichedUser = await fetchUserProfile(currentSession.user);
+              if (isMounted.current) {
+                setUser(enrichedUser);
+              }
+            }
+            break;
+            
+          case 'SIGNED_OUT':
+            // Clear all user-specific cache on sign out
+            setSession(null);
+            setUser(null);
+            break;
+            
+          case 'INITIAL_SESSION':
+            // Already handled above, but update if needed
+            if (currentSession?.user) {
+              setSession(currentSession);
+              const enrichedUser = await fetchUserProfile(currentSession.user);
+              if (isMounted.current) {
+                setUser(enrichedUser);
+              }
+            }
+            break;
+            
+          default:
+            // For any other events, sync the session
+            setSession(currentSession);
+            if (currentSession?.user) {
+              const enrichedUser = await fetchUserProfile(currentSession.user);
+              if (isMounted.current) {
+                setUser(enrichedUser);
+              }
+            } else {
+              setUser(null);
+            }
+        }
+        
+        if (isMounted.current) {
+          setLoading(false);
+        }
       }
     );
 
     return () => {
+      isMounted.current = false;
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [fetchUserProfile]);
+
+  // Auto-refresh session periodically when window regains focus
+  useEffect(() => {
+    if (!initialized) return;
+    
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && session) {
+        // Check if token might be stale (older than 50 minutes)
+        const tokenAge = session.expires_at ? 
+          (session.expires_at * 1000 - Date.now()) / 1000 / 60 : 60;
+        
+        if (tokenAge < 10) {
+          console.log('Token expiring soon, refreshing...');
+          await refreshSession();
+        }
+      }
+    };
+
+    const handleOnline = async () => {
+      if (session) {
+        console.log('Back online, verifying session...');
+        await refreshSession();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [initialized, session, refreshSession]);
 
   /**
    * Sign in with email and password
-   * 
-   * @param {string} email 
-   * @param {string} password 
-   * @returns {Promise<{data: object|null, error: object|null}>}
    */
   async function signIn(email, password) {
     try {
@@ -101,11 +324,6 @@ export function AuthProvider({ children }) {
 
   /**
    * Sign up with email and password
-   * 
-   * @param {string} email 
-   * @param {string} password 
-   * @param {string} name - Display name for profile
-   * @returns {Promise<{data: object|null, error: object|null}>}
    */
   async function signUp(email, password, name) {
     try {
@@ -131,8 +349,6 @@ export function AuthProvider({ children }) {
 
   /**
    * Sign out the current user
-   * 
-   * @returns {Promise<{error: object|null}>}
    */
   async function signOut() {
     try {
@@ -141,6 +357,10 @@ export function AuthProvider({ children }) {
       if (error) {
         return { error: { message: error.message } };
       }
+
+      // Clear local state immediately
+      setUser(null);
+      setSession(null);
 
       return { error: null };
     } catch (error) {
@@ -155,6 +375,7 @@ export function AuthProvider({ children }) {
     signIn,
     signUp,
     signOut,
+    refreshSession,
   };
 
   return (
@@ -166,9 +387,6 @@ export function AuthProvider({ children }) {
 
 /**
  * Hook to access auth context
- * 
- * USAGE:
- * const { user, signIn, signOut } = useAuth();
  */
 export function useAuth() {
   const context = useContext(AuthContext);
