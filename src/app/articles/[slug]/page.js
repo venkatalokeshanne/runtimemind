@@ -55,83 +55,103 @@ export async function generateStaticParams() {
  * - Critical for SEO (unique meta per page)
  * - Open Graph tags for social sharing
  * 
- * @param {Object} params
- * @param {string} params.slug - Post slug from URL
- * @returns {Promise<import('next').Metadata>}
+/**
+ * Optional ISR
+ * Revalidate metadata every 1 hour
+ */
+export const revalidate = 60;
+
+/**
+ * Generate SEO + OpenGraph + Twitter metadata
  */
 export async function generateMetadata({ params }) {
-  const { slug } = await params;
+  const { slug } = params;
+
   const { data: post } = await getPostBySlug(slug);
-  
+
   if (!post) {
     return {
-      title: 'Post Not Found',
+      title: 'Article not found',
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
-  
-  // Use SEO fields if available, fall back to default values
-  const metaTitle = post.seo_title || post.title;
-  const metaDescription = post.seo_description || post.excerpt || `Read "${post.title}" on Ink Blog.`;
-  const canonicalUrl = `https://runtimemind.vercel.app/articles/${slug}`;
-  
-  // Use cover image or generate placeholder from title
-  // Append a numeric cache-busting `v` param (epoch ms) so crawlers refetch updated images
-  const timestamp = post.updated_at ? Date.parse(post.updated_at) : post.published_at ? Date.parse(post.published_at) : Date.now();
+
+  /**
+   * Safe timestamp for cache busting
+   */
+  const timestamp =
+    post.updated_at
+      ? new Date(post.updated_at).getTime()
+      : post.published_at
+      ? new Date(post.published_at).getTime()
+      : Date.now();
+
   const cacheBuster = encodeURIComponent(timestamp);
-  const ogImage = post.cover_image_url || `https://runtimemind.vercel.app/api/og?title=${encodeURIComponent(post.title)}&type=article&author=${encodeURIComponent(post.author?.name || '')}&v=${cacheBuster}`;
-  
+
+  /**
+   * OG Image resolution
+   * 1. Use cover image if exists
+   * 2. Fallback to dynamic OG generator
+   */
+  const ogImage =
+    post.cover_image_url ||
+    `https://runtimemind.vercel.app/api/og?title=${encodeURIComponent(
+      post.title
+    )}&type=article&author=${encodeURIComponent(
+      post.author?.name || ''
+    )}&v=${cacheBuster}`;
+
+  const description =
+    post.excerpt ||
+    post.summary ||
+    'Read this article on RuntimeMind.';
+
   return {
-    title: metaTitle,
-    description: metaDescription,
-    
-    // Keywords from tags for SEO
-    keywords: post.tags && post.tags.length > 0 ? post.tags : undefined,
-    
-    // Canonical URL to avoid duplicate content issues
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    
-    // Robots meta for indexing control
-    robots: {
-      index: true,
-      follow: true,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-      'max-video-preview': -1,
-    },
-    
-    // Open Graph for social sharing (Facebook, LinkedIn, etc.)
+    title: post.title,
+    description,
+
+    /**
+     * Open Graph (Facebook, LinkedIn, Slack)
+     */
     openGraph: {
-      title: metaTitle,
-      description: metaDescription,
+      title: post.title,
+      description,
       type: 'article',
-      url: canonicalUrl,
+      url: `https://runtimemind.vercel.app/articles/${slug}`,
       siteName: 'RuntimeMind',
-      locale: 'en_US',
-      publishedTime: post.published_at,
-      modifiedTime: post.updated_at,
-      authors: post.author ? [post.author.name] : [],
-      tags: post.tags || [],
       images: [
         {
           url: ogImage,
           width: 1200,
           height: 630,
-          alt: metaTitle,
-          type: 'image/png',
-        }
+          alt: post.title,
+        },
       ],
     },
-    
-    // Twitter card (optimized for large preview)
+
+    /**
+     * Twitter / X
+     */
     twitter: {
       card: 'summary_large_image',
-      title: metaTitle,
-      description: metaDescription,
-      site: '@runtimemind',
-      creator: post.author?.twitter_handle || '@runtimemind',
+      title: post.title,
+      description,
       images: [ogImage],
+    },
+
+    /**
+     * SEO extras
+     */
+    alternates: {
+      canonical: `https://runtimemind.vercel.app/articles/${slug}`,
+    },
+
+    robots: {
+      index: true,
+      follow: true,
     },
   };
 }
@@ -140,8 +160,6 @@ export async function generateMetadata({ params }) {
  * Revalidate pages periodically
  * Allows updates to reflect without full rebuild
  */
-export const revalidate = 60;
-
 /**
  * Generate Article JSON-LD structured data
  */
