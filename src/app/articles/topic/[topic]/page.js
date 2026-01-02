@@ -23,13 +23,13 @@ export async function generateMetadata({ params }) {
     description: `Read the best ${decodedTopic} articles, tutorials, stories and guides. Discover insights and learn from writers on RuntimeMind.`,
     keywords: [decodedTopic, `${decodedTopic} articles`, `${decodedTopic} tutorials`, `learn ${decodedTopic}`, `${decodedTopic} guide`],
     alternates: {
-      canonical: `https://runtimemind.com/articles/topic/${encodeURIComponent(decodedTopic.toLowerCase())}`,
+      canonical: `https://runtimemind.vercel.app/articles/topic/${encodeURIComponent(decodedTopic.toLowerCase())}`,
     },
     openGraph: {
       title: `${decodedTopic} Articles & Tutorials | RuntimeMind`,
       description: `Read the best ${decodedTopic} articles, tutorials and guides on RuntimeMind.`,
       type: 'website',
-      url: `https://runtimemind.com/articles/topic/${encodeURIComponent(decodedTopic.toLowerCase())}`,
+      url: `https://runtimemind.vercel.app/articles/topic/${encodeURIComponent(decodedTopic.toLowerCase())}`,
     },
     twitter: {
       card: 'summary_large_image',

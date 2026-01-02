@@ -27,10 +27,10 @@ export async function generateMetadata({ params }) {
   
   const metaTitle = series.title;
   const metaDescription = series.description || `Explore the "${series.title}" series on RuntimeMind.`;
-  const canonicalUrl = `https://runtimemind.com/series/${slug}`;
+  const canonicalUrl = `https://runtimemind.vercel.app/series/${slug}`;
   
   // Use cover image or generate placeholder from title
-  const ogImage = series.cover_image_url || `https://runtimemind.com/api/og?title=${encodeURIComponent(series.title)}&type=series`;
+  const ogImage = series.cover_image_url || `https://runtimemind.vercel.app/api/og?title=${encodeURIComponent(series.title)}&type=series`;
   
   return {
     title: metaTitle,
@@ -85,12 +85,12 @@ export default async function SeriesDetailPage({ params }) {
     '@type': 'CreativeWorkSeries',
     name: series.title,
     description: series.description,
-    url: `https://runtimemind.com/series/${slug}`,
-    image: series.cover_image_url || 'https://runtimemind.com/og-default.png',
+    url: `https://runtimemind.vercel.app/series/${slug}`,
+    image: series.cover_image_url || 'https://runtimemind.vercel.app/og-default.png',
     publisher: {
       '@type': 'Organization',
       name: 'RuntimeMind',
-      url: 'https://runtimemind.com',
+      url: 'https://runtimemind.vercel.app',
     },
   } : null;
   

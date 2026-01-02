@@ -23,7 +23,7 @@ import { getAllPostSlugs, getPublishedSeries, getTopicsWithPosts } from '@/modul
  * Base URL for the site
  * In production, this should come from environment variable
  */
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://runtimemind.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://runtimemind.vercel.app';
 
 /**
  * Generate sitemap entries

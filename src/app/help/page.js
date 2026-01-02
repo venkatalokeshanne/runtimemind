@@ -37,12 +37,12 @@ export const metadata = {
   description: 'Complete guide to writing and publishing articles on RuntimeMind. Learn SEO best practices, series creation, and how to reach your audience.',
   keywords: ['help', 'documentation', 'writing guide', 'SEO tips', 'blogging tutorial'],
   alternates: {
-    canonical: 'https://runtimemind.com/help',
+    canonical: 'https://runtimemind.vercel.app/help',
   },
   openGraph: {
     title: 'Help & Documentation | RuntimeMind',
     description: 'Complete guide to writing and publishing articles on RuntimeMind.',
-    url: 'https://runtimemind.com/help',
+    url: 'https://runtimemind.vercel.app/help',
     images: [{ url: '/api/og?title=Help%20%26%20Documentation&type=page', width: 1200, height: 630 }],
   },
   twitter: {

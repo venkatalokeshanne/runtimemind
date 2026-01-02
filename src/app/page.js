@@ -24,13 +24,13 @@ const websiteJsonLd = {
   '@type': 'WebSite',
   name: 'RuntimeMind',
   alternateName: ['Runtime Mind', 'RuntimeMind Blog'],
-  url: 'https://runtimemind.com',
+  url: 'https://runtimemind.vercel.app',
   description: 'A free platform to write and publish articles, stories, tutorials, and blog posts. Join our community of writers and creators.',
   potentialAction: {
     '@type': 'SearchAction',
     target: {
       '@type': 'EntryPoint',
-      urlTemplate: 'https://runtimemind.com/articles?search={search_term_string}',
+      urlTemplate: 'https://runtimemind.vercel.app/articles?search={search_term_string}',
     },
     'query-input': 'required name=search_term_string',
   },
@@ -40,8 +40,8 @@ const organizationJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'RuntimeMind',
-  url: 'https://runtimemind.com',
-  logo: 'https://runtimemind.com/logo.png',
+  url: 'https://runtimemind.vercel.app',
+  logo: 'https://runtimemind.vercel.app/logo.png',
   description: 'A free platform where anyone can write and publish articles, stories, tutorials, and blog posts.',
   sameAs: [
     'https://twitter.com/runtimemind',
@@ -50,7 +50,7 @@ const organizationJsonLd = {
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'customer support',
-    url: 'https://runtimemind.com/help',
+    url: 'https://runtimemind.vercel.app/help',
   },
 };
 

@@ -66,14 +66,14 @@ const geistMono = Geist_Mono({
  * - robots configuration for indexing
  */
 export const metadata = {
-  metadataBase: new URL('https://runtimemind.com'),
+  metadataBase: new URL('https://runtimemind.vercel.app'),
   title: {
     default: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
     template: '%s | RuntimeMind',
   },
   description: 'Write and publish articles, stories, tutorials, and blog posts. A free platform for writers, developers, and creators to share ideas with the world.',
   keywords: ['write articles online', 'publish blog posts', 'free blogging platform', 'write stories', 'share ideas', 'tech articles', 'programming tutorials', 'content writing', 'blogging site', 'article publishing', 'creative writing platform', 'developer blog'],
-  authors: [{ name: 'RuntimeMind', url: 'https://runtimemind.com' }],
+  authors: [{ name: 'RuntimeMind', url: 'https://runtimemind.vercel.app' }],
   creator: 'RuntimeMind',
   publisher: 'RuntimeMind',
   
@@ -86,9 +86,9 @@ export const metadata = {
   
   // Canonical and alternates
   alternates: {
-    canonical: 'https://runtimemind.com',
+    canonical: 'https://runtimemind.vercel.app',
     types: {
-      'application/rss+xml': 'https://runtimemind.com/rss',
+      'application/rss+xml': 'https://runtimemind.vercel.app/rss',
     },
   },
   
@@ -96,7 +96,7 @@ export const metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://runtimemind.com',
+    url: 'https://runtimemind.vercel.app',
     siteName: 'RuntimeMind',
     title: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
     description: 'Write and publish articles, stories, tutorials, and blog posts. A free platform for writers and creators to share ideas.',
@@ -180,18 +180,18 @@ const jsonLd = {
   '@graph': [
     {
       '@type': 'WebSite',
-      '@id': 'https://runtimemind.com/#website',
-      url: 'https://runtimemind.com',
+      '@id': 'https://runtimemind.vercel.app/#website',
+      url: 'https://runtimemind.vercel.app',
       name: 'RuntimeMind',
       description: 'Tech articles, programming tutorials, and software development insights.',
       publisher: {
-        '@id': 'https://runtimemind.com/#organization',
+        '@id': 'https://runtimemind.vercel.app/#organization',
       },
       potentialAction: {
         '@type': 'SearchAction',
         target: {
           '@type': 'EntryPoint',
-          urlTemplate: 'https://runtimemind.com/articles?q={search_term_string}',
+          urlTemplate: 'https://runtimemind.vercel.app/articles?q={search_term_string}',
         },
         'query-input': 'required name=search_term_string',
       },
@@ -199,14 +199,14 @@ const jsonLd = {
     },
     {
       '@type': 'Organization',
-      '@id': 'https://runtimemind.com/#organization',
+      '@id': 'https://runtimemind.vercel.app/#organization',
       name: 'RuntimeMind',
-      url: 'https://runtimemind.com',
+      url: 'https://runtimemind.vercel.app',
       logo: {
         '@type': 'ImageObject',
-        '@id': 'https://runtimemind.com/#logo',
-        url: 'https://runtimemind.com/logo.png',
-        contentUrl: 'https://runtimemind.com/logo.png',
+        '@id': 'https://runtimemind.vercel.app/#logo',
+        url: 'https://runtimemind.vercel.app/logo.png',
+        contentUrl: 'https://runtimemind.vercel.app/logo.png',
         caption: 'RuntimeMind',
       },
       sameAs: [

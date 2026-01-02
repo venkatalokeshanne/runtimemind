@@ -28,12 +28,12 @@ export const metadata = {
   description: 'Discover articles, stories, tutorials, and blog posts from writers around the world. Browse content on technology, business, lifestyle, creativity and more.',
   keywords: ['articles', 'blog posts', 'stories', 'tutorials', 'tech articles', 'programming tutorials', 'creative writing', 'lifestyle', 'business'],
   alternates: {
-    canonical: 'https://runtimemind.com/articles',
+    canonical: 'https://runtimemind.vercel.app/articles',
   },
   openGraph: {
     title: 'Articles - Read Stories, Tutorials & Blog Posts | RuntimeMind',
     description: 'Discover articles, stories, tutorials, and blog posts from writers around the world.',
-    url: 'https://runtimemind.com/articles',
+    url: 'https://runtimemind.vercel.app/articles',
     type: 'website',
     images: [{ url: '/api/og?title=Articles&type=page', width: 1200, height: 630 }],
   },

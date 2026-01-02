@@ -13,7 +13,7 @@
  * ============================================================================
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://runtimemind.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://runtimemind.vercel.app';
 
 /**
  * Generate robots.txt content
