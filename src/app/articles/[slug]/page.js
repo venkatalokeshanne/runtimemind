@@ -75,7 +75,9 @@ export async function generateMetadata({ params }) {
   const canonicalUrl = `https://runtimemind.vercel.app/articles/${slug}`;
   
   // Use cover image or generate placeholder from title
-  const ogImage = post.cover_image_url || `https://runtimemind.vercel.app/api/og?title=${encodeURIComponent(post.title)}&type=article&author=${encodeURIComponent(post.author?.name || '')}`;
+  // Append a cache-busting `v` param (updated_at or published_at) so crawlers refetch updated images
+  const cacheBuster = encodeURIComponent(post.updated_at || post.published_at || Date.now());
+  const ogImage = post.cover_image_url || `https://runtimemind.vercel.app/api/og?title=${encodeURIComponent(post.title)}&type=article&author=${encodeURIComponent(post.author?.name || '')}&v=${cacheBuster}`;
   
   return {
     title: metaTitle,
