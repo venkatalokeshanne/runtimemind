@@ -68,7 +68,7 @@ export default async function sitemap() {
   // Dynamic topic pages
   const { data: topics } = await getTopicsWithPosts();
   const topicPages = (topics || []).map((topic) => ({
-    url: `${BASE_URL}/articles/topic/${encodeURIComponent(topic.topic.toLowerCase())}`,
+    url: `${BASE_URL}/articles/topic/${encodeURIComponent((topic.topic || '').toLowerCase())}`,
     lastModified: new Date(),
     changeFrequency: 'daily',
     priority: 0.85,
