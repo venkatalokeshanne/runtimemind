@@ -7,7 +7,8 @@ export default async function Head({ params }) {
 
   if (!post) return null;
 
-  const cacheBuster = encodeURIComponent(post.updated_at || post.published_at || Date.now());
+  const timestamp = post.updated_at ? Date.parse(post.updated_at) : post.published_at ? Date.parse(post.published_at) : Date.now();
+  const cacheBuster = encodeURIComponent(timestamp);
   const ogImage = post.cover_image_url || `https://runtimemind.vercel.app/api/og?title=${encodeURIComponent(post.title)}&type=article&author=${encodeURIComponent(post.author?.name || '')}&v=${cacheBuster}`;
 
   return (
