@@ -225,6 +225,48 @@ export async function getPostBySlug(slug) {
 }
 
 /**
+ * Fetch a single post by ID (used in dashboard edit flow).
+ * Includes series relation and author attachment. Does NOT require published=true.
+ */
+export async function getPostById(id) {
+  if (!id) return { data: null, error: { message: 'Post ID required' } };
+
+  if (!isSupabaseConfigured) {
+    // Try mock fallback
+    const mock = getMockPosts({ limit: 1000 }).data || [];
+    const found = mock.find(p => String(p.id) === String(id));
+    if (!found) return { data: null, error: { message: 'Post not found' } };
+    const enriched = await attachAuthorsToPosts([found]);
+    return { data: enriched[0] || null, error: null };
+  }
+
+  try {
+    const { data, error } = await supabaseFetch(
+      `posts?select=${POST_FULL_FIELDS},series:series_id(id,title)&id=eq.${id}&limit=1`
+    );
+
+    if (error) {
+      console.error('Error fetching post by id:', error);
+      return { data: null, error };
+    }
+
+    const post = data?.[0];
+    if (!post) return { data: null, error: { message: 'Post not found', code: 'NOT_FOUND' } };
+
+    try {
+      const enriched = await attachAuthorsToPosts([post]);
+      return { data: enriched[0] || null, error: null };
+    } catch (e) {
+      console.error('Failed to attach author (by id):', e);
+      return { data: post, error: null };
+    }
+  } catch (e) {
+    console.error('Exception fetching post by id:', e);
+    return { data: null, error: { message: e.message } };
+  }
+}
+
+/**
  * Increment view count
  */
 export async function incrementViewCount(postId) {

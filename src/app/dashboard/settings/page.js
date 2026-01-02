@@ -14,7 +14,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Globe, Linkedin, Twitter, Camera, Loader2, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { supabase } from '@/lib/supabase/client';
+import { getProfile, uploadAvatar as uploadAvatarService, updateProfile } from '@/modules/user/services/profile';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
@@ -53,13 +53,9 @@ export default function SettingsPage() {
       if (!user?.id) return;
 
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('name, bio, avatar_url, website, twitter, linkedin')
-          .eq('id', user.id)
-          .single();
+        const { data, error } = await getProfile(user.id);
 
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error('Error loading profile:', error);
           setMessage({ type: 'error', text: 'Failed to load profile' });
           return;
@@ -118,29 +114,13 @@ export default function SettingsPage() {
 
     setUploadingAvatar(true);
     try {
-      const fileExt = avatarFile.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, avatarFile, {
-          cacheControl: '3600',
-          upsert: true,
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
+      const { data, error } = await uploadAvatarService(avatarFile, user.id);
+      if (error) {
+        console.error('Upload error:', error);
+        setMessage({ type: 'error', text: 'Failed to upload avatar' });
+        return null;
       }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      return publicUrl;
+      return data;
     } catch (err) {
       console.error('Avatar upload failed:', err);
       setMessage({ type: 'error', text: 'Failed to upload avatar' });
@@ -167,19 +147,18 @@ export default function SettingsPage() {
         }
       }
 
-      // Update profile
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          name: formData.name || user.email?.split('@')[0] || 'User',
-          bio: formData.bio || null,
-          avatar_url: newAvatarUrl,
-          website: formData.website || null,
-          twitter: formData.twitter || null,
-          linkedin: formData.linkedin || null,
-          updated_at: new Date().toISOString(),
-        });
+      // Update profile via service
+      const payload = {
+        name: formData.name || user.email?.split('@')[0] || 'User',
+        bio: formData.bio || null,
+        avatar_url: newAvatarUrl,
+        website: formData.website || null,
+        twitter: formData.twitter || null,
+        linkedin: formData.linkedin || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: updData, error } = await updateProfile(user.id, payload);
 
       if (error) {
         console.error('Update error:', error);

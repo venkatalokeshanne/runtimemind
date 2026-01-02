@@ -32,6 +32,7 @@ import { ThemeProvider } from '@/lib/theme';
 import { AuthProvider } from '@/lib/auth';
 import { SiteHeader, SiteFooter } from '@/modules/layout/components';
 import './globals.css';
+import WriteFloating from '@/components/WriteFloating';
 
 /**
  * FONT CONFIGURATION
@@ -253,6 +254,7 @@ export default function RootLayout({ children }) {
             </main>
             
             <SiteFooter siteName="RuntimeMind" />
+            <WriteFloating />
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -25,6 +25,7 @@ import {
   Plus,
   Trash2,
   Settings,
+  Feather,
   Tag,
   Search,
   Star,
@@ -32,8 +33,7 @@ import {
   Folder
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { supabase } from '@/lib/supabase/client';
-import { updatePost, deletePost, uploadCoverImage, getSeriesForSelect } from '@/modules/articles/services';
+import { updatePost, deletePost, uploadCoverImage, getSeriesForSelect, getPostById } from '@/modules/articles/services';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Editor } from '@/ui/Editor/Editor';
@@ -905,11 +905,7 @@ export default function EditPostPage() {
   }, [user, params.id]);
 
   async function loadPost() {
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*, series:series_id(id, title)')
-      .eq('id', params.id)
-      .single();
+    const { data, error } = await getPostById(params.id);
 
     if (error || !data) {
       setLoadError('Post not found');
@@ -1418,6 +1414,15 @@ export default function EditPostPage() {
           </>
         )}
       </AnimatePresence>
+
+        {/* Floating new-article button (bottom-right) */}
+        <div className="fixed right-4 bottom-4 z-50">
+          <Link href="/dashboard/new" aria-label="Write new article">
+            <Button className="rounded-full p-3 shadow-lg bg-accent text-white hover:bg-accent-dark" title="Write new article">
+              <Feather className="w-5 h-5" />
+            </Button>
+          </Link>
+        </div>
     </div>
   );
 }

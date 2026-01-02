@@ -7,6 +7,7 @@ export {
   getTopicsWithPosts,
   getPostsByTopic,
   getPostBySlug,
+  getPostById,
   getAllPostSlugs,
   getPostsByAuthor,
   getAuthorById,

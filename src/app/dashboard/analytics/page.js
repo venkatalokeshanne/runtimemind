@@ -28,7 +28,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { supabase } from '@/lib/supabase/client';
+import { getPostsByAuthor } from '@/modules/articles/services/posts';
 import { formatDateShort } from '@/lib/utils';
 
 // Stat Card Component
@@ -173,12 +173,7 @@ export default function AnalyticsPage() {
       try {
         setLoading(true);
 
-        // Fetch all user posts with stats
-        const { data: postsData, error } = await supabase
-          .from('posts')
-          .select('id, slug, title, published, published_at, created_at, view_count, likes_count, comments_count')
-          .eq('author_id', user.id)
-          .order('view_count', { ascending: false });
+        const { data: postsData, error } = await getPostsByAuthor(user.id, { includeDrafts: true });
 
         if (error) {
           console.error('Error fetching analytics:', error);
@@ -186,6 +181,10 @@ export default function AnalyticsPage() {
         }
 
         const allPosts = postsData || [];
+
+        // Sort by view_count desc to match previous behavior
+        allPosts.sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
+
         setPosts(allPosts);
 
         // Calculate totals
