@@ -46,6 +46,12 @@ export function LikeButton({
   const [count, setCount] = useState(initialCount);
   const [isLoading, setIsLoading] = useState(false);
   const [showLoginHint, setShowLoginHint] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted to true after hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch initial like status
   useEffect(() => {
@@ -123,7 +129,7 @@ export function LikeButton({
           ${className}
         `}
         whileTap={{ scale: 0.95 }}
-        title={user ? (liked ? 'Unlike' : 'Like') : 'Sign in to like'}
+        title={mounted ? (user ? (liked ? 'Unlike' : 'Like') : 'Sign in to like') : 'Like'}
       >
         <AnimatePresence mode="wait">
           <motion.div

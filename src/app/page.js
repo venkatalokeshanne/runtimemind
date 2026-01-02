@@ -6,14 +6,52 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Feather, BookOpen, Sparkles, Clock, Layers, Users, PenTool, Bookmark, ArrowUpRight } from 'lucide-react';
+import { ArrowRight, Feather, BookOpen, Sparkles, Clock, Layers, Users, PenTool, Bookmark, ArrowUpRight, Folder } from 'lucide-react';
 import { getPublishedPosts, getTrendingTags, getPublishedSeries } from '@/modules/articles/services';
 import { Button } from '@/ui/button';
 import { HomePageClient } from './components/home-page-client';
 
+
 export const metadata = {
-  title: 'Runtimemind | Tech Blog for Developers',
-  description: 'Explore in-depth technical articles, tutorials, and insights for modern software development.',
+  title: 'RuntimeMind | Write Articles, Stories & Blog Posts Free',
+  description: 'Start writing today! Publish articles, stories, tutorials, and blog posts for free. Join a community of writers, developers, and creators sharing ideas.',
+  keywords: ['write articles free', 'publish blog posts', 'free writing platform', 'blogging site', 'share stories online', 'tech blog', 'create content', 'write online', 'article writing', 'story publishing'],
+};
+
+// JSON-LD structured data for homepage
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'RuntimeMind',
+  alternateName: ['Runtime Mind', 'RuntimeMind Blog'],
+  url: 'https://runtimemind.com',
+  description: 'A free platform to write and publish articles, stories, tutorials, and blog posts. Join our community of writers and creators.',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: 'https://runtimemind.com/articles?search={search_term_string}',
+    },
+    'query-input': 'required name=search_term_string',
+  },
+};
+
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'RuntimeMind',
+  url: 'https://runtimemind.com',
+  logo: 'https://runtimemind.com/logo.png',
+  description: 'A free platform where anyone can write and publish articles, stories, tutorials, and blog posts.',
+  sameAs: [
+    'https://twitter.com/runtimemind',
+    'https://github.com/runtimemind',
+  ],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer support',
+    url: 'https://runtimemind.com/help',
+  },
 };
 
 export const revalidate = 60;
@@ -28,6 +66,16 @@ export default async function HomePage() {
 
   return (
     <HomePageClient posts={posts} tags={tags} series={series}>
+      {/* JSON-LD Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      
       {/* Landing Page for logged-out users */}
       <div className="min-h-screen bg-background">
         {/* Floating Write CTA */}
@@ -48,11 +96,11 @@ export default async function HomePage() {
         <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-accent/10 via-transparent to-transparent">
           <div className="container mx-auto px-4 py-20 md:py-28 lg:py-32 flex flex-col items-center text-center gap-6">
             <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-text-primary leading-tight mb-2">
-              <span className="text-accent">Runtimemind</span> —
-              <span className="block text-text-secondary text-2xl md:text-3xl font-medium mt-2">Where developers shape tomorrow's tech</span>
+              <span className="text-accent">RuntimeMind</span> —
+              <span className="block text-text-secondary text-2xl md:text-3xl font-medium mt-2">Where ideas come to life</span>
             </h1>
             <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-6">
-              Editorial insights, deep dives, and a platform to share your voice. Read, write, and connect with the minds building the future.
+              Write articles, share stories, publish tutorials. A free platform for writers, developers, and creators to share their voice with the world.
             </p>
             {tags && tags.length > 0 && (
               <div className="flex flex-wrap justify-center gap-2 mt-2">
@@ -114,10 +162,18 @@ export default async function HomePage() {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent text-white text-xs font-medium mb-4">
-                      <Sparkles className="w-3 h-3" />
-                      Featured
-                    </span>
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent text-white text-xs font-medium">
+                        <Sparkles className="w-3 h-3" />
+                        Featured
+                      </span>
+                      {featuredPost.topic && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium">
+                          <Folder className="w-3 h-3" />
+                          {featuredPost.topic}
+                        </span>
+                      )}
+                    </div>
                     <h3 className="text-xl md:text-2xl font-bold text-white mb-2 line-clamp-2 group-hover:text-accent transition-colors">
                       {featuredPost.title}
                     </h3>
@@ -168,6 +224,11 @@ export default async function HomePage() {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-4">
+                      {post.topic && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[10px] font-medium mb-2">
+                          {post.topic}
+                        </span>
+                      )}
                       <h3 className="text-sm font-bold text-white line-clamp-2 group-hover:text-accent transition-colors">
                         {post.title}
                       </h3>
@@ -202,6 +263,11 @@ export default async function HomePage() {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-4">
+                      {post.topic && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[10px] font-medium mb-2">
+                          {post.topic}
+                        </span>
+                      )}
                       <h3 className="text-sm font-bold text-white line-clamp-2 group-hover:text-accent transition-colors">
                         {post.title}
                       </h3>
@@ -228,9 +294,17 @@ export default async function HomePage() {
                       <h3 className="font-semibold text-text-primary group-hover:text-accent transition-colors line-clamp-1">
                         {post.title}
                       </h3>
-                      <p className="text-xs text-text-muted mt-0.5 line-clamp-1">
-                        {post.author?.name} · {post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-text-muted mt-0.5">
+                        {post.topic && (
+                          <>
+                            <span className="text-accent">{post.topic}</span>
+                            <span>·</span>
+                          </>
+                        )}
+                        <span>{post.author?.name}</span>
+                        <span>·</span>
+                        <span>{post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
+                      </div>
                     </div>
                     <ArrowRight className="w-4 h-4 text-text-muted group-hover:text-accent group-hover:translate-x-1 transition-all" />
                   </Link>

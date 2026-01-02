@@ -4,14 +4,12 @@
  * ============================================================================
  * 
  * Data access layer for post likes.
- * Handles like/unlike operations and count retrieval.
- * 
- * ============================================================================
+ * Uses raw fetch to avoid Supabase client issues.
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabaseFetch, getAuthToken } from '@/lib/supabase/fetch';
 
-// Check if Supabase is configured (has URL and key)
+// Check if Supabase is configured
 const isSupabaseConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -19,14 +17,12 @@ const isSupabaseConfigured = Boolean(
 
 // Mock likes for development
 const mockLikes = new Map([
-  ['1', new Set(['author-1', 'author-2', 'author-3'])], // post 1 has 3 likes
-  ['2', new Set(['author-1'])], // post 2 has 1 like
+  ['1', new Set(['author-1', 'author-2', 'author-3'])],
+  ['2', new Set(['author-1'])],
 ]);
 
 /**
  * Get like count for a post
- * @param {string} postId - The post ID
- * @returns {Promise<{count: number, error: Object|null}>}
  */
 export async function getLikeCount(postId) {
   if (!isSupabaseConfigured) {
@@ -34,19 +30,16 @@ export async function getLikeCount(postId) {
     return { count: likes.size, error: null };
   }
 
-  const { count, error } = await supabase
-    .from('likes')
-    .select('*', { count: 'exact', head: true })
-    .eq('post_id', postId);
+  const { data, error } = await supabaseFetch(
+    `likes?select=id&post_id=eq.${postId}`,
+    { headers: { 'Prefer': 'count=exact' } }
+  );
 
-  return { count: count || 0, error };
+  return { count: Array.isArray(data) ? data.length : 0, error };
 }
 
 /**
  * Check if a user has liked a post
- * @param {string} postId - The post ID
- * @param {string} userId - The user ID
- * @returns {Promise<{liked: boolean, error: Object|null}>}
  */
 export async function hasUserLiked(postId, authorId) {
   if (!authorId) {
@@ -58,21 +51,15 @@ export async function hasUserLiked(postId, authorId) {
     return { liked: likes.has(authorId), error: null };
   }
 
-  const { data, error } = await supabase
-    .from('likes')
-    .select('id')
-    .eq('post_id', postId)
-    .eq('author_id', authorId)
-    .maybeSingle();
+  const { data, error } = await supabaseFetch(
+    `likes?select=id&post_id=eq.${postId}&author_id=eq.${authorId}&limit=1`
+  );
 
-  return { liked: !!data, error };
+  return { liked: Array.isArray(data) && data.length > 0, error };
 }
 
 /**
  * Get like info for a post (count + user's like status)
- * @param {string} postId - The post ID
- * @param {string|null} userId - The user ID (null if not logged in)
- * @returns {Promise<{count: number, liked: boolean, error: Object|null}>}
  */
 export async function getPostLikeInfo(postId, authorId = null) {
   if (!isSupabaseConfigured) {
@@ -85,35 +72,30 @@ export async function getPostLikeInfo(postId, authorId = null) {
   }
 
   // Get count
-  const { count, error: countError } = await supabase
-    .from('likes')
-    .select('*', { count: 'exact', head: true })
-    .eq('post_id', postId);
+  const { data: countData, error: countError } = await supabaseFetch(
+    `likes?select=id&post_id=eq.${postId}`
+  );
 
   if (countError) {
     return { count: 0, liked: false, error: countError };
   }
 
+  const count = Array.isArray(countData) ? countData.length : 0;
+
   // Check if user liked
   let liked = false;
   if (authorId) {
-    const { data } = await supabase
-      .from('likes')
-      .select('id')
-      .eq('post_id', postId)
-      .eq('author_id', authorId)
-      .maybeSingle();
-    liked = !!data;
+    const { data } = await supabaseFetch(
+      `likes?select=id&post_id=eq.${postId}&author_id=eq.${authorId}&limit=1`
+    );
+    liked = Array.isArray(data) && data.length > 0;
   }
 
-  return { count: count || 0, liked, error: null };
+  return { count, liked, error: null };
 }
 
 /**
  * Like a post
- * @param {string} postId - The post ID
- * @param {string} userId - The user ID
- * @returns {Promise<{success: boolean, error: Object|null}>}
  */
 export async function likePost(postId, authorId) {
   if (!authorId) {
@@ -128,12 +110,10 @@ export async function likePost(postId, authorId) {
     return { success: true, error: null };
   }
 
-  const { error } = await supabase
-    .from('likes')
-    .insert({
-      post_id: postId,
-      author_id: authorId,
-    });
+  const { error } = await supabaseFetch('likes', {
+    method: 'POST',
+    body: JSON.stringify({ post_id: postId, author_id: authorId }),
+  });
 
   // Ignore duplicate error (user already liked)
   if (error?.code === '23505') {
@@ -145,9 +125,6 @@ export async function likePost(postId, authorId) {
 
 /**
  * Unlike a post
- * @param {string} postId - The post ID
- * @param {string} userId - The user ID
- * @returns {Promise<{success: boolean, error: Object|null}>}
  */
 export async function unlikePost(postId, authorId) {
   if (!authorId) {
@@ -162,34 +139,28 @@ export async function unlikePost(postId, authorId) {
     return { success: true, error: null };
   }
 
-  const { error } = await supabase
-    .from('likes')
-    .delete()
-    .eq('post_id', postId)
-    .eq('author_id', authorId);
+  const { error } = await supabaseFetch(
+    `likes?post_id=eq.${postId}&author_id=eq.${authorId}`,
+    { method: 'DELETE' }
+  );
 
   return { success: !error, error };
 }
 
 /**
  * Toggle like on a post
- * @param {string} postId - The post ID
- * @param {string} userId - The user ID
- * @returns {Promise<{liked: boolean, error: Object|null}>}
  */
 export async function toggleLike(postId, authorId) {
   if (!authorId) {
     return { liked: false, error: { message: 'User must be logged in' } };
   }
 
-  // Check current state
   const { liked: currentlyLiked, error: checkError } = await hasUserLiked(postId, authorId);
   
   if (checkError) {
     return { liked: false, error: checkError };
   }
 
-  // Toggle
   if (currentlyLiked) {
     const { error } = await unlikePost(postId, authorId);
     return { liked: false, error };
@@ -201,8 +172,6 @@ export async function toggleLike(postId, authorId) {
 
 /**
  * Get posts liked by a user
- * @param {string} userId - The user ID
- * @returns {Promise<{data: string[], error: Object|null}>}
  */
 export async function getLikedPostIds(authorId) {
   if (!authorId) {
@@ -219,10 +188,9 @@ export async function getLikedPostIds(authorId) {
     return { data: likedPosts, error: null };
   }
 
-  const { data, error } = await supabase
-    .from('likes')
-    .select('post_id')
-    .eq('author_id', authorId);
+  const { data, error } = await supabaseFetch(
+    `likes?select=post_id&author_id=eq.${authorId}`
+  );
 
   return { 
     data: (data || []).map(l => l.post_id), 

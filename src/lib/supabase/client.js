@@ -62,10 +62,10 @@ function validateEnvironment() {
 /**
  * Creates the Supabase client with proper configuration.
  * 
- * OPTIONS EXPLAINED:
- * - auth.autoRefreshToken: Automatically refresh JWT before expiry
- * - auth.persistSession: Store session in localStorage for SSR hydration
- * - auth.detectSessionInUrl: Handle OAuth redirects
+ * Auth configuration:
+ * - autoRefreshToken: true - automatically refresh tokens before expiry
+ * - persistSession: true - store session in localStorage for persistence across refreshes
+ * - detectSessionInUrl: true - detect OAuth redirects
  */
 function createSupabaseClient() {
   // In development without env vars, return a mock that logs warnings
@@ -90,6 +90,7 @@ function createSupabaseClient() {
         signIn: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
         signOut: () => Promise.resolve({ error: null }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        refreshSession: () => Promise.resolve({ data: { session: null }, error: null }),
       },
       storage: {
         from: () => ({
@@ -105,6 +106,7 @@ function createSupabaseClient() {
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
+      storageKey: 'runtimemind-auth',
     },
   });
 }

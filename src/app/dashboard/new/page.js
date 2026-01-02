@@ -26,7 +26,8 @@ import {
   Tag,
   Search,
   Star,
-  AlertCircle
+  AlertCircle,
+  Folder
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { createPost, uploadCoverImage, getSeriesForSelect } from '@/modules/articles/services';
@@ -34,6 +35,7 @@ import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Editor } from '@/ui/Editor/Editor';
 import { EditorContent } from '@/ui/Editor/EditorContent';
+import { TOPIC_LIST } from '@/lib/constants';
 import Link from 'next/link';
 
 // ============================================================================
@@ -340,6 +342,11 @@ function PublishPanel({
   setSeriesDropdownOpen,
   tags,
   setTags,
+  // Topic
+  topic,
+  setTopic,
+  topicDropdownOpen,
+  setTopicDropdownOpen,
   // SEO fields
   seoTitle,
   setSeoTitle,
@@ -351,6 +358,7 @@ function PublishPanel({
   setCustomReadTime,
   // AI generation
   onAiGenerateTags,
+  onAiGenerateTopic,
   aiGenerating
 }) {
   // Lock body scroll when panel is open
@@ -500,6 +508,88 @@ function PublishPanel({
               />
             </motion.div>
           )}
+        </div>
+
+        {/* Topic Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-text-primary flex items-center gap-2">
+              <Folder className="w-4 h-4 text-accent" />
+              Topic
+            </h3>
+            <motion.button
+              onClick={onAiGenerateTopic}
+              disabled={aiGenerating === 'topic'}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 hover:from-purple-500/20 hover:to-pink-500/20 transition-all disabled:opacity-50 text-xs font-medium text-purple-600"
+            >
+              {aiGenerating === 'topic' ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
+              AI Suggest
+            </motion.button>
+          </div>
+          <p className="text-xs text-text-muted">
+            Choose a topic to categorize your post.
+          </p>
+          
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setTopicDropdownOpen(!topicDropdownOpen)}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-border bg-surface hover:bg-hover transition-colors text-sm"
+            >
+              {topic ? (
+                <span className="text-text-primary">{topic}</span>
+              ) : (
+                <span className="text-text-muted">Select a topic</span>
+              )}
+              <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${topicDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {topicDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setTopicDropdownOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="absolute top-full left-0 right-0 mt-2 z-20 bg-surface border border-border rounded-xl shadow-lg overflow-hidden"
+                  >
+                    <div className="max-h-48 overflow-y-auto">
+                      {/* None option */}
+                      <button
+                        onClick={() => {
+                          setTopic('');
+                          setTopicDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-hover transition-colors ${!topic ? 'bg-hover' : ''}`}
+                      >
+                        <span className="text-text-secondary">No topic</span>
+                      </button>
+                      {TOPIC_LIST.map(t => (
+                        <button
+                          key={t}
+                          onClick={() => {
+                            setTopic(t);
+                            setTopicDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-2.5 text-sm hover:bg-hover transition-colors flex items-center justify-between ${topic === t ? 'bg-hover' : ''}`}
+                        >
+                          <span className="text-text-primary">{t}</span>
+                          {topic === t && <Check className="w-4 h-4 text-accent" />}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Tags Section */}
@@ -709,6 +799,10 @@ export default function NewPostPage() {
   // Tags state
   const [tags, setTags] = useState([]);
 
+  // Topic state
+  const [topic, setTopic] = useState('');
+  const [topicDropdownOpen, setTopicDropdownOpen] = useState(false);
+
   // SEO state
   const [seoTitle, setSeoTitle] = useState('');
   const [seoDescription, setSeoDescription] = useState('');
@@ -778,6 +872,10 @@ export default function NewPostPage() {
         if (Array.isArray(data.result)) {
           setTags(data.result.slice(0, 10));
         }
+      } else if (type === 'topic') {
+        if (data.result && TOPIC_LIST.includes(data.result)) {
+          setTopic(data.result);
+        }
       } else if (type === 'all') {
         // Generate all at once
         if (data.result) {
@@ -829,31 +927,46 @@ export default function NewPostPage() {
     setCoverPreview(null);
   };
 
+  // Validation function for publishing
+  const validateForPublish = () => {
+    if (!title.trim()) {
+      setError('Please add a title for your post');
+      return false;
+    }
+    if (title.trim().length < 5) {
+      setError('Title must be at least 5 characters long');
+      return false;
+    }
+    if (title.trim().length > 200) {
+      setError('Title must be less than 200 characters');
+      return false;
+    }
+    if (!plainText || plainText.trim().length < 100) {
+      setError('Content must be at least 100 characters to publish. Add more content or save as draft.');
+      return false;
+    }
+    if (wordCount < 50) {
+      setError('Post must have at least 50 words to publish. Add more content or save as draft.');
+      return false;
+    }
+    return true;
+  };
+
+  // Handle publish button click - validate first, then show modal
+  const handlePublishClick = () => {
+    if (validateForPublish()) {
+      setShowPublishModal(true);
+    }
+  };
+
   const handleSave = async (publish = false) => {
-    // Validation for publishing
-    if (publish) {
-      if (!title.trim()) {
-        setError('Please add a title for your post');
-        return;
-      }
-      if (title.trim().length < 5) {
-        setError('Title must be at least 5 characters long');
-        return;
-      }
-      if (title.trim().length > 200) {
-        setError('Title must be less than 200 characters');
-        return;
-      }
-      if (!plainText || plainText.trim().length < 100) {
-        setError('Content must be at least 100 characters to publish. Add more content or save as draft.');
-        return;
-      }
-      if (wordCount < 50) {
-        setError('Post must have at least 50 words to publish. Add more content or save as draft.');
-        return;
-      }
-    } else {
-      // Basic validation for drafts
+    // Validation for publishing (double-check in case modal is bypassed)
+    if (publish && !validateForPublish()) {
+      return;
+    }
+    
+    // Basic validation for drafts
+    if (!publish) {
       if (!title.trim() && !plainText) {
         setError('Please add a title or some content before saving');
         return;
@@ -864,6 +977,46 @@ export default function NewPostPage() {
     setError('');
 
     try {
+      // Auto-generate tags with AI when publishing without tags
+      let finalTags = tags;
+      if (publish && tags.length === 0 && plainText && plainText.length >= 50) {
+        try {
+          const response = await fetch('/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: plainText, type: 'tags' }),
+          });
+          const data = await response.json();
+          if (response.ok && Array.isArray(data.result)) {
+            finalTags = data.result.slice(0, 10);
+            setTags(finalTags); // Update UI
+          }
+        } catch (tagErr) {
+          // Silently continue without tags if AI fails
+          console.warn('Auto-tag generation failed:', tagErr);
+        }
+      }
+
+      // Auto-generate topic with AI when publishing without topic
+      let finalTopic = topic;
+      if (publish && !topic && plainText && plainText.length >= 50) {
+        try {
+          const response = await fetch('/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: plainText, type: 'topic' }),
+          });
+          const data = await response.json();
+          if (response.ok && data.result) {
+            finalTopic = data.result;
+            setTopic(finalTopic); // Update UI
+          }
+        } catch (topicErr) {
+          // Silently continue without topic if AI fails
+          console.warn('Auto-topic generation failed:', topicErr);
+        }
+      }
+
       // Upload cover if exists
       let coverUrl = null;
       if (coverFile) {
@@ -885,7 +1038,8 @@ export default function NewPostPage() {
         cover_image_url: coverUrl,
         series_id: selectedSeries?.id || null,
         series_order: selectedSeries ? seriesOrder : null,
-        tags: tags,
+        tags: finalTags,
+        topic: finalTopic || null,
         // SEO fields
         seo_title: seoTitle.trim() || null,
         seo_description: seoDescription.trim() || null,
@@ -912,7 +1066,7 @@ export default function NewPostPage() {
       <TopBar
         onBack={() => router.back()}
         onSaveDraft={() => handleSave(false)}
-        onPublish={() => setShowPublishModal(true)}
+        onPublish={handlePublishClick}
         saving={saving}
         autoSaved={autoSaved}
         wordCount={wordCount}
@@ -1015,6 +1169,10 @@ export default function NewPostPage() {
             setSeriesDropdownOpen={setSeriesDropdownOpen}
             tags={tags}
             setTags={setTags}
+            topic={topic}
+            setTopic={setTopic}
+            topicDropdownOpen={topicDropdownOpen}
+            setTopicDropdownOpen={setTopicDropdownOpen}
             seoTitle={seoTitle}
             setSeoTitle={setSeoTitle}
             seoDescription={seoDescription}
@@ -1024,6 +1182,7 @@ export default function NewPostPage() {
             customReadTime={customReadTime}
             setCustomReadTime={setCustomReadTime}
             onAiGenerateTags={() => handleAiGenerate('tags')}
+            onAiGenerateTopic={() => handleAiGenerate('topic')}
             aiGenerating={aiGenerating}
           />
         )}

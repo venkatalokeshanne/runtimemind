@@ -15,6 +15,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { formatDate } from '@/lib/utils';
+import { ImagePlaceholder } from '@/modules/articles/components';
 
 const containerVariants = {
   hidden: { opacity: 0 },

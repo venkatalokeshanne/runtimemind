@@ -40,6 +40,19 @@ export function SiteFooter({ siteName = 'Ink' }) {
             © {currentYear} {siteName}. All rights reserved.
           </p>
 
+          {/* Created by LinkedIn */}
+          <p className="text-sm text-text-muted flex items-center gap-1">
+            Created with <span className="text-red-500">♥</span> by
+            <a
+              href="https://www.linkedin.com/in/venkatalokesh"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline ml-1"
+            >
+              venkatalokesh
+            </a>
+          </p>
+
           {/* Footer Links */}
           <nav aria-label="Footer navigation">
             <ul className="flex items-center gap-6 text-sm">

@@ -17,7 +17,7 @@
  * ============================================================================
  */
 
-import { getAllPostSlugs, getPublishedSeries } from '@/modules/articles/services';
+import { getAllPostSlugs, getPublishedSeries, getTopicsWithPosts } from '@/modules/articles/services';
 
 /**
  * Base URL for the site
@@ -57,7 +57,22 @@ export default async function sitemap() {
       changeFrequency: 'monthly',
       priority: 0.5,
     },
+    {
+      url: `${BASE_URL}/help`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    },
   ];
+
+  // Dynamic topic pages
+  const { data: topics } = await getTopicsWithPosts();
+  const topicPages = (topics || []).map((topic) => ({
+    url: `${BASE_URL}/articles/topic/${encodeURIComponent(topic.topic.toLowerCase())}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: 0.85,
+  }));
 
   // Dynamic article pages
   const { data: posts } = await getAllPostSlugs();
@@ -79,5 +94,5 @@ export default async function sitemap() {
     priority: 0.85,
   }));
 
-  return [...staticPages, ...postPages, ...seriesPages];
+  return [...staticPages, ...topicPages, ...postPages, ...seriesPages];
 }

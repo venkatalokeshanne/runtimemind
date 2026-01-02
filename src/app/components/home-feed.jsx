@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth';
-import { ArrowRight, Clock, Bookmark, MoreHorizontal, TrendingUp, Sparkles, Users, Feather, Check } from 'lucide-react';
+import { ArrowRight, Clock, Bookmark, MoreHorizontal, TrendingUp, Sparkles, Users, Feather, Check, Folder } from 'lucide-react';
 import { Button } from '@/ui/button';
 import { 
   toggleBookmark, 
@@ -21,6 +21,7 @@ import {
   getSuggestedUsers,
   getFollowingPosts,
   getTrendingPosts,
+  getTopicsWithPosts,
 } from '@/modules/articles/services';
 
 /**
@@ -73,7 +74,7 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
               </div>
             )}
             <Link 
-              href={`/articles?author=${post.author?.id}`}
+              href={`/author/${post.author?.id}`}
               className="text-sm font-medium text-text-primary hover:text-accent transition-colors"
             >
               {post.author?.name || 'Anonymous'}
@@ -90,6 +91,14 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
               </>
             )}
           </div>
+
+          {/* Topic Badge */}
+          {post.topic && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-xs font-medium mb-2">
+              <Folder className="w-3 h-3" />
+              {post.topic}
+            </span>
+          )}
 
           {/* Title & Excerpt */}
           <Link href={`/articles/${post.slug}`} className="block group/link">
@@ -190,7 +199,7 @@ function FollowButton({ userId, targetUserId, isFollowing: initialFollowing, onT
 /**
  * Sidebar - Trending & Recommendations
  */
-function Sidebar({ tags, series, userId, suggestedUsers, followStatuses, onToggleFollow, userBookmarks }) {
+function Sidebar({ tags, series, userId, suggestedUsers, followStatuses, onToggleFollow, userBookmarks, topics }) {
   return (
     <aside className="space-y-8">
       {/* Staff Picks */}
@@ -226,18 +235,18 @@ function Sidebar({ tags, series, userId, suggestedUsers, followStatuses, onToggl
         </div>
       </div>
 
-      {/* Trending Topics */}
-      {tags && tags.length > 0 && (
+      {/* Recommended Topics */}
+      {topics && topics.length > 0 && (
         <div>
           <h3 className="font-bold text-text-primary mb-4">Recommended topics</h3>
           <div className="flex flex-wrap gap-2">
-            {tags.slice(0, 7).map((tag) => (
+            {topics.map((topic) => (
               <Link
-                key={tag.slug}
-                href={`/articles/tag/${tag.slug}`}
+                key={topic}
+                href={`/articles/topic/${encodeURIComponent(topic)}`}
                 className="px-3 py-1.5 rounded-full bg-surface-inset text-text-secondary text-sm hover:bg-accent/10 hover:text-accent transition-colors"
               >
-                {tag.name}
+                {topic}
               </Link>
             ))}
           </div>
@@ -348,6 +357,18 @@ export function HomeFeed({ posts: initialPosts, tags, series }) {
   // Follow states
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [followStatuses, setFollowStatuses] = useState({});
+  
+  // Topics state
+  const [topics, setTopics] = useState([]);
+
+  // Load topics on mount
+  useEffect(() => {
+    const loadTopics = async () => {
+      const { data } = await getTopicsWithPosts({ limit: 10 });
+      setTopics(data || []);
+    };
+    loadTopics();
+  }, []);
 
   // Load bookmark and follow statuses on mount
   useEffect(() => {
@@ -586,6 +607,7 @@ export function HomeFeed({ posts: initialPosts, tags, series }) {
                 followStatuses={followStatuses}
                 onToggleFollow={handleToggleFollow}
                 userBookmarks={userBookmarks}
+                topics={topics}
               />
             </div>
           </div>

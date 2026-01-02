@@ -4,9 +4,10 @@
  * ============================================================================
  * 
  * Handles user follow/unfollow functionality.
+ * Uses raw fetch to avoid Supabase client issues.
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabaseFetch } from '@/lib/supabase/fetch';
 
 /**
  * Get users that a user is following
@@ -16,16 +17,9 @@ export async function getFollowing(userId, { limit = 20, offset = 0 } = {}) {
     return { data: [], error: null };
   }
 
-  const { data, error } = await supabase
-    .from('follows')
-    .select(`
-      id,
-      created_at,
-      following_id
-    `)
-    .eq('follower_id', userId)
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+  const { data, error } = await supabaseFetch(
+    `follows?select=id,created_at,following_id&follower_id=eq.${userId}&order=created_at.desc&offset=${offset}&limit=${limit}`
+  );
 
   if (error) {
     console.error('Error fetching following:', error);
@@ -38,12 +32,10 @@ export async function getFollowing(userId, { limit = 20, offset = 0 } = {}) {
 
   // Fetch profiles separately
   const userIds = data.map(f => f.following_id);
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, name, bio, avatar_url')
-    .in('id', userIds);
+  const { data: profiles } = await supabaseFetch(
+    `profiles?select=id,name,bio,avatar_url&id=in.(${userIds.join(',')})`
+  );
 
-  // Return flattened user data
   const profileMap = (profiles || []).reduce((acc, p) => {
     acc[p.id] = p;
     return acc;
@@ -64,16 +56,9 @@ export async function getFollowers(userId, { limit = 20, offset = 0 } = {}) {
     return { data: [], error: null };
   }
 
-  const { data, error } = await supabase
-    .from('follows')
-    .select(`
-      id,
-      created_at,
-      follower_id
-    `)
-    .eq('following_id', userId)
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+  const { data, error } = await supabaseFetch(
+    `follows?select=id,created_at,follower_id&following_id=eq.${userId}&order=created_at.desc&offset=${offset}&limit=${limit}`
+  );
 
   if (error) {
     console.error('Error fetching followers:', error);
@@ -86,12 +71,10 @@ export async function getFollowers(userId, { limit = 20, offset = 0 } = {}) {
 
   // Fetch profiles separately
   const userIds = data.map(f => f.follower_id);
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, name, bio, avatar_url')
-    .in('id', userIds);
+  const { data: profiles } = await supabaseFetch(
+    `profiles?select=id,name,bio,avatar_url&id=in.(${userIds.join(',')})`
+  );
 
-  // Return flattened user data
   const profileMap = (profiles || []).reduce((acc, p) => {
     acc[p.id] = p;
     return acc;
@@ -112,44 +95,16 @@ export async function isFollowing(followerId, followingId) {
     return false;
   }
 
-  const { data, error } = await supabase
-    .from('follows')
-    .select('id')
-    .eq('follower_id', followerId)
-    .eq('following_id', followingId)
-    .single();
-
-  if (error && error.code !== 'PGRST116') {
-    console.error('Error checking follow status:', error);
-  }
-
-  return !!data;
-}
-
-/**
- * Get follow status for multiple users
- */
-export async function getFollowStatuses(followerId, userIds) {
-  if (!followerId || !userIds?.length) {
-    return {};
-  }
-
-  const { data, error } = await supabase
-    .from('follows')
-    .select('following_id')
-    .eq('follower_id', followerId)
-    .in('following_id', userIds);
+  const { data, error } = await supabaseFetch(
+    `follows?select=id&follower_id=eq.${followerId}&following_id=eq.${followingId}&limit=1`
+  );
 
   if (error) {
-    console.error('Error fetching follow statuses:', error);
-    return {};
+    console.error('Error checking follow status:', error);
+    return false;
   }
 
-  // Return as a map: { userId: true, ... }
-  return data.reduce((acc, { following_id }) => {
-    acc[following_id] = true;
-    return acc;
-  }, {});
+  return Array.isArray(data) && data.length > 0;
 }
 
 /**
@@ -157,21 +112,21 @@ export async function getFollowStatuses(followerId, userIds) {
  */
 export async function followUser(followerId, followingId) {
   if (!followerId || !followingId) {
-    return { data: null, error: { message: 'Follower ID and Following ID required' } };
+    return { error: { message: 'Both user IDs required' } };
   }
 
   if (followerId === followingId) {
-    return { data: null, error: { message: 'Cannot follow yourself' } };
+    return { error: { message: 'Cannot follow yourself' } };
   }
 
-  const { data, error } = await supabase
-    .from('follows')
-    .insert({ follower_id: followerId, following_id: followingId })
-    .select()
-    .single();
+  const { data, error } = await supabaseFetch('follows?select=*', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=representation' },
+    body: JSON.stringify({ follower_id: followerId, following_id: followingId }),
+  });
 
   if (error) {
-    // Handle already following gracefully
+    // Handle duplicate gracefully
     if (error.code === '23505') {
       return { data: null, error: null };
     }
@@ -179,7 +134,7 @@ export async function followUser(followerId, followingId) {
     return { data: null, error };
   }
 
-  return { data, error: null };
+  return { data: Array.isArray(data) ? data[0] : data, error: null };
 }
 
 /**
@@ -187,14 +142,13 @@ export async function followUser(followerId, followingId) {
  */
 export async function unfollowUser(followerId, followingId) {
   if (!followerId || !followingId) {
-    return { error: { message: 'Follower ID and Following ID required' } };
+    return { error: { message: 'Both user IDs required' } };
   }
 
-  const { error } = await supabase
-    .from('follows')
-    .delete()
-    .eq('follower_id', followerId)
-    .eq('following_id', followingId);
+  const { error } = await supabaseFetch(
+    `follows?follower_id=eq.${followerId}&following_id=eq.${followingId}`,
+    { method: 'DELETE' }
+  );
 
   if (error) {
     console.error('Error unfollowing user:', error);
@@ -205,12 +159,12 @@ export async function unfollowUser(followerId, followingId) {
 }
 
 /**
- * Toggle follow (follow if not following, unfollow if following)
+ * Toggle follow status
  */
 export async function toggleFollow(followerId, followingId) {
-  const following = await isFollowing(followerId, followingId);
+  const currentlyFollowing = await isFollowing(followerId, followingId);
   
-  if (following) {
+  if (currentlyFollowing) {
     await unfollowUser(followerId, followingId);
     return { following: false };
   } else {
@@ -223,73 +177,101 @@ export async function toggleFollow(followerId, followingId) {
  * Get follower count for a user
  */
 export async function getFollowerCount(userId) {
-  if (!userId) return 0;
-
-  const { count, error } = await supabase
-    .from('follows')
-    .select('*', { count: 'exact', head: true })
-    .eq('following_id', userId);
-
-  if (error) {
-    console.error('Error getting follower count:', error);
-    return 0;
+  if (!userId) {
+    return { count: 0, error: null };
   }
 
-  return count || 0;
+  const { data, error } = await supabaseFetch(
+    `follows?select=id&following_id=eq.${userId}`
+  );
+
+  return { count: Array.isArray(data) ? data.length : 0, error };
 }
 
 /**
  * Get following count for a user
  */
 export async function getFollowingCount(userId) {
-  if (!userId) return 0;
-
-  const { count, error } = await supabase
-    .from('follows')
-    .select('*', { count: 'exact', head: true })
-    .eq('follower_id', userId);
-
-  if (error) {
-    console.error('Error getting following count:', error);
-    return 0;
+  if (!userId) {
+    return { count: 0, error: null };
   }
 
-  return count || 0;
+  const { data, error } = await supabaseFetch(
+    `follows?select=id&follower_id=eq.${userId}`
+  );
+
+  return { count: Array.isArray(data) ? data.length : 0, error };
 }
 
 /**
- * Get suggested users to follow (users who have posts, excluding already following)
+ * Get follow stats for a user
  */
-export async function getSuggestedUsers(userId, { limit = 5 } = {}) {
+export async function getFollowStats(userId) {
   if (!userId) {
-    return { data: [], error: null };
+    return { followers: 0, following: 0, error: null };
   }
 
-  // Get users the current user is already following
-  const { data: following } = await supabase
-    .from('follows')
-    .select('following_id')
-    .eq('follower_id', userId);
+  const [followersResult, followingResult] = await Promise.all([
+    getFollowerCount(userId),
+    getFollowingCount(userId),
+  ]);
 
-  const followingIds = following?.map(f => f.following_id) || [];
-  followingIds.push(userId); // Exclude self
+  return {
+    followers: followersResult.count,
+    following: followingResult.count,
+    error: followersResult.error || followingResult.error,
+  };
+}
 
-  // Get users with published posts, excluding already following
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(`
-      id,
-      name,
-      bio,
-      avatar_url
-    `)
-    .not('id', 'in', `(${followingIds.join(',')})`)
-    .limit(limit);
+/**
+ * Get follow statuses for multiple users (batch check)
+ */
+export async function getFollowStatuses(followerId, userIds) {
+  if (!followerId || !userIds?.length) {
+    return {};
+  }
+
+  const { data, error } = await supabaseFetch(
+    `follows?select=following_id&follower_id=eq.${followerId}&following_id=in.(${userIds.join(',')})`
+  );
+
+  if (error) {
+    console.error('Error fetching follow statuses:', error);
+    return {};
+  }
+
+  return (data || []).reduce((acc, { following_id }) => {
+    acc[following_id] = true;
+    return acc;
+  }, {});
+}
+
+/**
+ * Get suggested users to follow
+ */
+export async function getSuggestedUsers(userId, { limit = 5 } = {}) {
+  // Get profiles that the user isn't already following
+  const { data: profiles, error } = await supabaseFetch(
+    `profiles?select=id,name,bio,avatar_url&limit=${limit * 2}`
+  );
 
   if (error) {
     console.error('Error fetching suggested users:', error);
     return { data: [], error };
   }
 
-  return { data, error: null };
+  let suggestions = profiles || [];
+  
+  // Filter out the current user
+  if (userId) {
+    suggestions = suggestions.filter(p => p.id !== userId);
+    
+    // Filter out already followed users
+    if (suggestions.length > 0) {
+      const statuses = await getFollowStatuses(userId, suggestions.map(p => p.id));
+      suggestions = suggestions.filter(p => !statuses[p.id]);
+    }
+  }
+
+  return { data: suggestions.slice(0, limit), error: null };
 }

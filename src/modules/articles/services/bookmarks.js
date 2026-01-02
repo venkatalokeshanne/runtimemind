@@ -4,37 +4,27 @@
  * ============================================================================
  * 
  * Handles user reading list / saved posts functionality.
+ * Uses raw fetch to avoid Supabase client issues.
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabaseFetch, getAuthToken } from '@/lib/supabase/fetch';
 
 /**
  * Get user's bookmarked posts
  */
 export async function getUserBookmarks(userId, { limit = 20, offset = 0 } = {}) {
+  console.log('[getUserBookmarks] userId:', userId);
+  
   if (!userId) {
     return { data: [], error: null };
   }
 
-  const { data, error } = await supabase
-    .from('bookmarks')
-    .select(`
-      id,
-      created_at,
-      post:posts!post_id (
-        id,
-        slug,
-        title,
-        excerpt,
-        cover_image_url,
-        published_at,
-        author_id,
-        read_time_minutes
-      )
-    `)
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+  const select = 'id,created_at,post:posts!post_id(id,slug,title,excerpt,cover_image_url,published_at,author_id,read_time_minutes)';
+  const { data, error } = await supabaseFetch(
+    `bookmarks?select=${encodeURIComponent(select)}&user_id=eq.${userId}&order=created_at.desc&offset=${offset}&limit=${limit}`
+  );
+
+  console.log('[getUserBookmarks] Result:', { dataLength: data?.length, error });
 
   if (error) {
     console.error('Error fetching bookmarks:', error);
@@ -46,10 +36,9 @@ export async function getUserBookmarks(userId, { limit = 20, offset = 0 } = {}) 
     const authorIds = [...new Set(data.map(b => b.post?.author_id).filter(Boolean))];
     
     if (authorIds.length) {
-      const { data: authors } = await supabase
-        .from('profiles')
-        .select('id, name, avatar_url')
-        .in('id', authorIds);
+      const { data: authors } = await supabaseFetch(
+        `profiles?select=id,name,avatar_url&id=in.(${authorIds.join(',')})`
+      );
       
       const authorMap = (authors || []).reduce((acc, a) => {
         acc[a.id] = a;
@@ -76,19 +65,16 @@ export async function isPostBookmarked(userId, postId) {
     return false;
   }
 
-  const { data, error } = await supabase
-    .from('bookmarks')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('post_id', postId)
-    .maybeSingle();
+  const { data, error } = await supabaseFetch(
+    `bookmarks?select=id&user_id=eq.${userId}&post_id=eq.${postId}&limit=1`
+  );
 
   if (error) {
     console.error('Error checking bookmark:', error);
     return false;
   }
 
-  return !!data;
+  return data?.length > 0;
 }
 
 /**
@@ -99,11 +85,9 @@ export async function getBookmarkStatuses(userId, postIds) {
     return {};
   }
 
-  const { data, error } = await supabase
-    .from('bookmarks')
-    .select('post_id')
-    .eq('user_id', userId)
-    .in('post_id', postIds);
+  const { data, error } = await supabaseFetch(
+    `bookmarks?select=post_id&user_id=eq.${userId}&post_id=in.(${postIds.join(',')})`
+  );
 
   if (error) {
     console.error('Error fetching bookmark statuses:', error);
@@ -111,7 +95,7 @@ export async function getBookmarkStatuses(userId, postIds) {
   }
 
   // Return as a map: { postId: true, ... }
-  return data.reduce((acc, { post_id }) => {
+  return (data || []).reduce((acc, { post_id }) => {
     acc[post_id] = true;
     return acc;
   }, {});
@@ -125,11 +109,11 @@ export async function addBookmark(userId, postId) {
     return { data: null, error: { message: 'User ID and Post ID required' } };
   }
 
-  const { data, error } = await supabase
-    .from('bookmarks')
-    .insert({ user_id: userId, post_id: postId })
-    .select()
-    .single();
+  const { data, error } = await supabaseFetch('bookmarks?select=*', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=representation' },
+    body: JSON.stringify({ user_id: userId, post_id: postId }),
+  });
 
   if (error) {
     // Handle duplicate bookmark gracefully
@@ -140,7 +124,7 @@ export async function addBookmark(userId, postId) {
     return { data: null, error };
   }
 
-  return { data, error: null };
+  return { data: data?.[0] || null, error: null };
 }
 
 /**
@@ -151,11 +135,10 @@ export async function removeBookmark(userId, postId) {
     return { error: { message: 'User ID and Post ID required' } };
   }
 
-  const { error } = await supabase
-    .from('bookmarks')
-    .delete()
-    .eq('user_id', userId)
-    .eq('post_id', postId);
+  const { error } = await supabaseFetch(
+    `bookmarks?user_id=eq.${userId}&post_id=eq.${postId}`,
+    { method: 'DELETE' }
+  );
 
   if (error) {
     console.error('Error removing bookmark:', error);
@@ -192,23 +175,10 @@ export async function getUserSeriesBookmarks(userId, { limit = 20, offset = 0 } 
     return { data: [], error: null };
   }
 
-  const { data, error } = await supabase
-    .from('series_bookmarks')
-    .select(`
-      id,
-      created_at,
-      series:series!series_id (
-        id,
-        slug,
-        title,
-        description,
-        cover_image_url,
-        author_id
-      )
-    `)
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+  const select = 'id,created_at,series:series!series_id(id,slug,title,description,cover_image_url,author_id)';
+  const { data, error } = await supabaseFetch(
+    `series_bookmarks?select=${encodeURIComponent(select)}&user_id=eq.${userId}&order=created_at.desc&offset=${offset}&limit=${limit}`
+  );
 
   if (error) {
     console.error('Error fetching series bookmarks:', error);
@@ -220,10 +190,9 @@ export async function getUserSeriesBookmarks(userId, { limit = 20, offset = 0 } 
     const authorIds = [...new Set(data.map(b => b.series?.author_id).filter(Boolean))];
     
     if (authorIds.length) {
-      const { data: authors } = await supabase
-        .from('profiles')
-        .select('id, name, avatar_url')
-        .in('id', authorIds);
+      const { data: authors } = await supabaseFetch(
+        `profiles?select=id,name,avatar_url&id=in.(${authorIds.join(',')})`
+      );
       
       const authorMap = (authors || []).reduce((acc, a) => {
         acc[a.id] = a;
@@ -249,19 +218,16 @@ export async function isSeriesBookmarked(userId, seriesId) {
     return false;
   }
 
-  const { data, error } = await supabase
-    .from('series_bookmarks')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('series_id', seriesId)
-    .maybeSingle();
+  const { data, error } = await supabaseFetch(
+    `series_bookmarks?select=id&user_id=eq.${userId}&series_id=eq.${seriesId}&limit=1`
+  );
 
   if (error) {
     console.error('Error checking series bookmark:', error);
     return false;
   }
 
-  return !!data;
+  return data?.length > 0;
 }
 
 /**
@@ -272,18 +238,16 @@ export async function getSeriesBookmarkStatuses(userId, seriesIds) {
     return {};
   }
 
-  const { data, error } = await supabase
-    .from('series_bookmarks')
-    .select('series_id')
-    .eq('user_id', userId)
-    .in('series_id', seriesIds);
+  const { data, error } = await supabaseFetch(
+    `series_bookmarks?select=series_id&user_id=eq.${userId}&series_id=in.(${seriesIds.join(',')})`
+  );
 
   if (error) {
     console.error('Error fetching series bookmark statuses:', error);
     return {};
   }
 
-  return data.reduce((acc, { series_id }) => {
+  return (data || []).reduce((acc, { series_id }) => {
     acc[series_id] = true;
     return acc;
   }, {});
@@ -297,11 +261,11 @@ export async function addSeriesBookmark(userId, seriesId) {
     return { data: null, error: { message: 'User ID and Series ID required' } };
   }
 
-  const { data, error } = await supabase
-    .from('series_bookmarks')
-    .insert({ user_id: userId, series_id: seriesId })
-    .select()
-    .single();
+  const { data, error } = await supabaseFetch('series_bookmarks?select=*', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=representation' },
+    body: JSON.stringify({ user_id: userId, series_id: seriesId }),
+  });
 
   if (error) {
     if (error.code === '23505') {
@@ -311,7 +275,7 @@ export async function addSeriesBookmark(userId, seriesId) {
     return { data: null, error };
   }
 
-  return { data, error: null };
+  return { data: data?.[0] || null, error: null };
 }
 
 /**
@@ -322,11 +286,10 @@ export async function removeSeriesBookmark(userId, seriesId) {
     return { error: { message: 'User ID and Series ID required' } };
   }
 
-  const { error } = await supabase
-    .from('series_bookmarks')
-    .delete()
-    .eq('user_id', userId)
-    .eq('series_id', seriesId);
+  const { error } = await supabaseFetch(
+    `series_bookmarks?user_id=eq.${userId}&series_id=eq.${seriesId}`,
+    { method: 'DELETE' }
+  );
 
   if (error) {
     console.error('Error removing series bookmark:', error);

@@ -3,22 +3,24 @@
  */
 
 export const metadata = {
-  title: 'Series - Multi-Part Programming Tutorials',
-  description: 'Explore our curated series of multi-part programming tutorials. Deep dive into complex topics with step-by-step guides.',
-  keywords: ['programming series', 'tutorial series', 'multi-part tutorials', 'coding courses', 'learning path'],
+  title: 'Series - Multi-Part Tutorials & Guides',
+  description: 'Explore curated series of multi-part tutorials, guides and learning paths. Deep dive into complex topics with step-by-step content.',
+  keywords: ['series', 'tutorial series', 'multi-part tutorials', 'learning path', 'guides'],
   alternates: {
     canonical: 'https://runtimemind.com/series',
   },
   openGraph: {
-    title: 'Series - Multi-Part Programming Tutorials | RuntimeMind',
-    description: 'Explore our curated series of multi-part programming tutorials.',
+    title: 'Series - Multi-Part Tutorials & Guides | RuntimeMind',
+    description: 'Explore curated series of multi-part tutorials and learning paths.',
     url: 'https://runtimemind.com/series',
     type: 'website',
+    images: [{ url: '/api/og?title=Series&type=page', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Series | RuntimeMind',
-    description: 'Explore our curated series of multi-part programming tutorials.',
+    description: 'Explore curated series of multi-part tutorials and learning paths.',
+    images: ['/api/og?title=Series&type=page'],
   },
 };
 

@@ -193,7 +193,7 @@ export async function GET(request) {
                 justifyContent: 'space-between',
               }}
             >
-              {/* Logo */}
+              {/* Logo - Creative Ink Flow */}
               <div
                 style={{
                   display: 'flex',
@@ -201,20 +201,31 @@ export async function GET(request) {
                   gap: '14px',
                 }}
               >
-                <div
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '12px',
-                    background: `linear-gradient(135deg, ${colors.accent1} 0%, ${colors.accent2} 100%)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: `0 8px 32px ${colors.accent1}50, 0 0 0 1px ${colors.accent1}30`,
-                  }}
+                <svg
+                  width="44"
+                  height="44"
+                  viewBox="0 0 44 44"
+                  style={{ flexShrink: 0 }}
                 >
-                  <span style={{ fontSize: '22px', fontWeight: '800', color: 'white' }}>R</span>
-                </div>
+                  <defs>
+                    <linearGradient id="ogInkFlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#6366f1" />
+                      <stop offset="50%" stopColor="#8b5cf6" />
+                      <stop offset="100%" stopColor="#ec4899" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M8 36 C8 36 12 28 16 24 C20 20 18 14 22 10 C26 6 32 8 34 14 C36 20 32 24 28 28 C24 32 28 38 36 36"
+                    fill="none"
+                    stroke="url(#ogInkFlow)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="38" cy="12" r="2.5" fill="#ec4899" />
+                  <circle cx="34" cy="6" r="1.5" fill="#8b5cf6" opacity="0.8" />
+                  <circle cx="40" cy="18" r="1.5" fill="#6366f1" opacity="0.7" />
+                  <circle cx="8" cy="36" r="3" fill="url(#ogInkFlow)" />
+                </svg>
                 <span
                   style={{
                     fontSize: '22px',
@@ -393,7 +404,7 @@ export async function GET(request) {
                   letterSpacing: '0.05em',
                 }}
               >
-                2025
+                {new Date().getFullYear()}
               </span>
             </div>
           </div>
@@ -449,13 +460,45 @@ export async function GET(request) {
           />
           <div
             style={{
-              fontSize: '64px',
-              fontWeight: '800',
-              color: 'white',
-              letterSpacing: '-0.03em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '20px',
             }}
           >
-            RuntimeMind
+            <svg
+              width="64"
+              height="64"
+              viewBox="0 0 44 44"
+            >
+              <defs>
+                <linearGradient id="fbInkFlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#6366f1" />
+                  <stop offset="50%" stopColor="#8b5cf6" />
+                  <stop offset="100%" stopColor="#ec4899" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M8 36 C8 36 12 28 16 24 C20 20 18 14 22 10 C26 6 32 8 34 14 C36 20 32 24 28 28 C24 32 28 38 36 36"
+                fill="none"
+                stroke="url(#fbInkFlow)"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <circle cx="38" cy="12" r="2.5" fill="#ec4899" />
+              <circle cx="34" cy="6" r="1.5" fill="#8b5cf6" opacity="0.8" />
+              <circle cx="40" cy="18" r="1.5" fill="#6366f1" opacity="0.7" />
+              <circle cx="8" cy="36" r="3" fill="url(#fbInkFlow)" />
+            </svg>
+            <span
+              style={{
+                fontSize: '64px',
+                fontWeight: '800',
+                color: 'white',
+                letterSpacing: '-0.03em',
+              }}
+            >
+              RuntimeMind
+            </span>
           </div>
         </div>
       ),

@@ -4,9 +4,12 @@
 export {
   getPublishedPosts,
   getTrendingTags,
+  getTopicsWithPosts,
+  getPostsByTopic,
   getPostBySlug,
   getAllPostSlugs,
   getPostsByAuthor,
+  getAuthorById,
   createPost,
   updatePost,
   deletePost,

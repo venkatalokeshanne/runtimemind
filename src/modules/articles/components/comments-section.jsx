@@ -213,6 +213,12 @@ export function CommentsSection({ postId, initialCount = 0 }) {
   const [isLoading, setIsLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState(null);
   const [showAll, setShowAll] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted after hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Organize comments into threads
   const { topLevel, replies } = useMemo(() => {
@@ -287,16 +293,18 @@ export function CommentsSection({ postId, initialCount = 0 }) {
         </h2>
       </div>
 
-      {/* Comment form or login prompt */}
-      {user ? (
-        <div className="mb-6">
-          <CommentForm postId={postId} onSubmit={handleSubmit} />
-        </div>
-      ) : (
-        <div className="mb-6">
-          <LoginPrompt />
-        </div>
-      )}
+      {/* Comment form or login prompt - only show after hydration to avoid mismatch */}
+      <div className="mb-6">
+        {mounted ? (
+          user ? (
+            <CommentForm postId={postId} onSubmit={handleSubmit} />
+          ) : (
+            <LoginPrompt />
+          )
+        ) : (
+          <div className="h-24 bg-surface-inset rounded-xl animate-pulse" />
+        )}
+      </div>
 
       {/* Comments list */}
       {isLoading ? (

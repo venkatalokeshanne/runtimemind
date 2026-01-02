@@ -154,7 +154,7 @@ function generateArticleJsonLd(post, slug) {
     author: {
       '@type': 'Person',
       name: post.author?.name || 'RuntimeMind',
-      url: 'https://runtimemind.com',
+      url: post.author_id ? `https://runtimemind.com/author/${post.author_id}` : 'https://runtimemind.com',
     },
     publisher: {
       '@type': 'Organization',
@@ -170,8 +170,40 @@ function generateArticleJsonLd(post, slug) {
     },
     keywords: post.tags?.join(', ') || '',
     wordCount: post.content ? post.content.replace(/<[^>]*>/g, '').split(/\s+/).length : 0,
-    articleSection: 'Technology',
+    articleSection: post.topic || 'Technology',
     inLanguage: 'en-US',
+    isAccessibleForFree: true,
+    creativeWorkStatus: 'Published',
+  };
+}
+
+/**
+ * Generate BreadcrumbList JSON-LD for navigation
+ */
+function generateBreadcrumbJsonLd(post, slug) {
+  const breadcrumbs = [
+    { name: 'Home', url: 'https://runtimemind.com' },
+    { name: 'Articles', url: 'https://runtimemind.com/articles' },
+  ];
+  
+  if (post.topic) {
+    breadcrumbs.push({ 
+      name: post.topic, 
+      url: `https://runtimemind.com/articles/topic/${encodeURIComponent(post.topic.toLowerCase())}` 
+    });
+  }
+  
+  breadcrumbs.push({ name: post.title, url: `https://runtimemind.com/articles/${slug}` });
+  
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbs.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
   };
 }
 
@@ -211,6 +243,7 @@ export default async function PostPage({ params, searchParams }) {
   }
 
   const articleJsonLd = generateArticleJsonLd(post, slug);
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd(post, slug);
 
   return (
     <>
@@ -222,6 +255,13 @@ export default async function PostPage({ params, searchParams }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
       />
+      
+      {/* Breadcrumb JSON-LD for navigation in search results */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      
       <div className="container mx-auto px-4 py-12 md:py-16">
         <PostContent post={post} fromSeries={fromSeries} />
       </div>

@@ -22,6 +22,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowRight, Heart, MessageSquare } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { ImagePlaceholder } from './image-placeholder';
 
 export function FeaturedPost({ post }) {
   const readingTime = post.read_time_minutes || 5;
@@ -47,11 +48,7 @@ export function FeaturedPost({ post }) {
                 priority
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
-                <span className="text-6xl font-bold text-accent/30">
-                  {post.title?.charAt(0) || 'R'}
-                </span>
-              </div>
+              <ImagePlaceholder title={post.title} type="article" />
             )}
           </div>
 

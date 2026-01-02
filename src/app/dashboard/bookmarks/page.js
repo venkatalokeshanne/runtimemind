@@ -50,7 +50,7 @@ function BookmarkCard({ post, onRemove }) {
               </div>
             )}
             <Link 
-              href={`/articles?author=${post.author?.id}`}
+              href={`/author/${post.author?.id}`}
               className="text-sm font-medium text-text-primary hover:text-accent transition-colors"
             >
               {post.author?.name || 'Anonymous'}

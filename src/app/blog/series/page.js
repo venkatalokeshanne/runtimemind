@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Bookmark } from 'lucide-react';
-import { getPublishedSeries, getSeriesPostsCount, getPostsInSeries, isSeriesBookmarked, toggleSeriesBookmark } from '@/modules/articles/services';
+import { getPublishedSeries, getSeriesPostsCount, getPostsInSeries, isSeriesBookmarked, toggleSeriesBookmark } from '@/modules/blog/services';
 import { useAuth } from '@/lib/auth';
 import { ImagePlaceholder } from '@/modules/articles/components';
 
@@ -58,7 +58,7 @@ function CardItem({ series, index }) {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={() => setShowPreview(false)}
     >
-      <Link href={`/series/${series.slug}`} className="block group h-full">
+      <Link href={`/blog/series/${series.slug}`} className="block group h-full">
         <motion.article
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -133,7 +133,7 @@ function CardItem({ series, index }) {
               {posts.slice(0, 5).map((post, i) => (
                 <li key={post.id}>
                   <Link 
-                    href={`/articles/${post.slug}`}
+                    href={`/blog/${post.slug}`}
                     className="flex items-center gap-2 text-sm text-text-primary hover:text-accent transition-colors"
                   >
                     <span className="text-text-muted text-xs w-5">{i + 1}.</span>
@@ -203,7 +203,7 @@ function ListItem({ series, index }) {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={() => setShowPreview(false)}
     >
-      <Link href={`/series/${series.slug}`} className="block group">
+      <Link href={`/blog/series/${series.slug}`} className="block group">
         <motion.article
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -268,7 +268,7 @@ function ListItem({ series, index }) {
               {posts.slice(0, 5).map((post, i) => (
                 <li key={post.id}>
                   <Link 
-                    href={`/articles/${post.slug}`}
+                    href={`/blog/${post.slug}`}
                     className="flex items-center gap-2 text-sm text-text-primary hover:text-accent transition-colors"
                   >
                     <span className="text-text-muted text-xs w-5">{i + 1}.</span>

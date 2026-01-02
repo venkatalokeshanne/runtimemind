@@ -27,8 +27,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Heart, MessageSquare } from 'lucide-react';
+import { Heart, MessageSquare, Folder } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { ImagePlaceholder } from './image-placeholder';
 
 /**
  * PostCard Component
@@ -41,6 +42,7 @@ import { formatDate } from '@/lib/utils';
  * @param {string} props.post.cover_image_url
  * @param {string} props.post.published_at
  * @param {number} props.post.read_time_minutes - Stored read time in minutes
+ * @param {string} props.post.topic - Post topic/category
  * @param {Object} props.post.author
  */
 export function PostCard({ post, compact = false, large = false }) {
@@ -62,16 +64,20 @@ export function PostCard({ post, compact = false, large = false }) {
         href={`/articles/${post.slug}`}
         className="block"
       >
-        {/* Cover Image (optional) */}
-        {post.cover_image_url && !compact && (
+        {/* Cover Image */}
+        {!compact && (
           <div className="relative aspect-[16/9] mb-4 overflow-hidden rounded-[var(--radius-md)] bg-surface">
-            <Image
-              src={post.cover_image_url}
-              alt={`Cover image for ${post.title}`}
-              fill
-              className="object-cover transition-opacity duration-300 group-hover:opacity-90"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
+            {post.cover_image_url ? (
+              <Image
+                src={post.cover_image_url}
+                alt={`Cover image for ${post.title}`}
+                fill
+                className="object-cover transition-opacity duration-300 group-hover:opacity-90"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            ) : (
+              <ImagePlaceholder title={post.title} type="article" />
+            )}
           </div>
         )}
 
@@ -91,6 +97,14 @@ export function PostCard({ post, compact = false, large = false }) {
         {/* Content */}
         {!compact && (
           <div className="space-y-2">
+            {/* Topic Badge */}
+            {post.topic && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-xs font-medium">
+                <Folder className="w-3 h-3" />
+                {post.topic}
+              </span>
+            )}
+
             {/* Title */}
             <h2 className={`text-${large ? '2xl' : 'xl'} font-semibold leading-tight text-text-primary group-hover:text-accent transition-colors duration-200`}>
               {post.title}

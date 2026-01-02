@@ -15,6 +15,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { formatDate } from '@/lib/utils';
+import { ImagePlaceholder } from './image-placeholder';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -57,32 +58,39 @@ function PostGridItem({ post }) {
 
   return (
     <motion.article variants={itemVariants} className="group h-full">
-      <Link href={`/articles/${post.slug}`} className="block h-full flex flex-col">
-        {/* Image */}
-        <div className="relative aspect-[16/10] mb-4 rounded-xl overflow-hidden bg-surface border border-border group-hover:border-accent/30 transition-colors">
-          {post.cover_image_url ? (
-            <Image
-              src={post.cover_image_url}
-              alt={post.title}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-purple-500/10 flex items-center justify-center">
-              <span className="text-4xl font-bold text-accent/30">
-                {post.title?.charAt(0) || 'R'}
-              </span>
-            </div>
-          )}
-        </div>
+      <div className="block h-full flex flex-col">
+        {/* Image - clickable to article */}
+        <Link href={`/articles/${post.slug}`} className="block">
+          <div className="relative aspect-[16/10] mb-4 rounded-xl overflow-hidden bg-surface border border-border group-hover:border-accent/30 transition-colors">
+            {post.cover_image_url ? (
+              <Image
+                src={post.cover_image_url}
+                alt={post.title}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            ) : (
+              <>
+                <span className="block md:hidden w-full h-full">
+                  <ImagePlaceholder type="article" />
+                </span>
+                <span className="hidden md:block w-full h-full">
+                  <ImagePlaceholder title={post.title} type="article" showFullTitle />
+                </span>
+              </>
+            )}
+          </div>
+        </Link>
 
         {/* Content */}
         <div className="flex-1 flex flex-col space-y-2">
-          {/* Title */}
-          <h3 className="text-lg font-semibold text-text-primary leading-snug group-hover:text-accent transition-colors line-clamp-2">
-            {post.title}
-          </h3>
+          {/* Title - clickable to article */}
+          <Link href={`/articles/${post.slug}`}>
+            <h3 className="text-lg font-semibold text-text-primary leading-snug group-hover:text-accent transition-colors line-clamp-2">
+              {post.title}
+            </h3>
+          </Link>
 
           {/* Excerpt */}
           {post.excerpt && (
@@ -94,7 +102,10 @@ function PostGridItem({ post }) {
           {/* Meta */}
           <div className="flex items-center gap-3 text-sm text-text-muted pt-2 mt-auto">
             {post.author && (
-              <div className="flex items-center gap-2">
+              <Link 
+                href={`/author/${post.author_id}`}
+                className="flex items-center gap-2 hover:text-accent transition-colors"
+              >
                 {post.author.avatar_url && (
                   <Image
                     src={post.author.avatar_url}
@@ -104,8 +115,8 @@ function PostGridItem({ post }) {
                     className="rounded-full"
                   />
                 )}
-                <span className="font-medium text-text-secondary">{post.author.name}</span>
-              </div>
+                <span className="font-medium text-text-secondary hover:text-accent">{post.author.name}</span>
+              </Link>
             )}
             {post.published_at && (
               <>
@@ -119,7 +130,7 @@ function PostGridItem({ post }) {
             <span>{readingTime} min</span>
           </div>
         </div>
-      </Link>
+      </div>
     </motion.article>
   );
 }

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowRight, Clock, Layers } from 'lucide-react';
 import { getRelatedPosts } from '@/modules/articles/services';
+import { ImagePlaceholder } from './image-placeholder';
 
 export function RelatedPosts({ postId, seriesId, currentSlug }) {
   const [posts, setPosts] = useState([]);
@@ -66,9 +67,7 @@ export function RelatedPosts({ postId, seriesId, currentSlug }) {
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-[var(--brand-muted)]">
-                    <span className="text-xl font-bold">{post.title?.charAt(0)}</span>
-                  </div>
+                  <ImagePlaceholder title={post.title} type="article" />
                 )}
               </div>
 

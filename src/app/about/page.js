@@ -12,8 +12,20 @@ import { ArrowRight, Feather, Eye, Zap, Heart, Code, Mail, Github, Twitter } fro
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'About',
-  description: 'Learn more about RuntimeMind and the philosophy behind it.',
+  title: 'About RuntimeMind - Free Article & Blog Writing Platform',
+  description: 'RuntimeMind is a free platform where anyone can write and publish articles, stories, tutorials, and blog posts. Join our community of writers and creators.',
+  openGraph: {
+    title: 'About RuntimeMind - Free Article & Blog Writing Platform',
+    description: 'RuntimeMind is a free platform where anyone can write and publish articles, stories, tutorials, and blog posts.',
+    url: 'https://runtimemind.com/about',
+    images: [{ url: '/api/og?title=About%20RuntimeMind&type=page', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'About RuntimeMind',
+    description: 'A free platform where anyone can write and publish articles, stories, and tutorials.',
+    images: ['/api/og?title=About%20RuntimeMind&type=page'],
+  },
 };
 
 export default function AboutPage() {
@@ -28,12 +40,12 @@ export default function AboutPage() {
               About Us
             </span>
             <h1 className="text-4xl md:text-6xl font-bold text-text-primary mb-6 leading-tight">
-              We write about ideas
-              <span className="text-accent"> that matter</span>
+              Your ideas,
+              <span className="text-accent"> your voice</span>
             </h1>
             <p className="text-xl text-text-muted leading-relaxed">
-              RuntimeMind is a space for thoughtful exploration of technology, creativity, 
-              and the human experience. We believe in depth over speed, clarity over complexity.
+              RuntimeMind is a free platform for writers, developers, and creators to share their ideas with the world. 
+              Write articles, publish stories, create tutorials — no limits, no barriers. We believe in depth over speed, clarity over complexity.
             </p>
           </div>
         </div>

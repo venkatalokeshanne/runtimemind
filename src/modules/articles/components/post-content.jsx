@@ -23,11 +23,13 @@
 
 'use client';
 
+import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { Globe, Linkedin, Twitter } from 'lucide-react';
 import { SeriesNavigation } from './series-navigation';
 import { SeriesBanner } from './series-banner';
 import { RelatedPosts } from './related-posts';
+import { MoreFromAuthor } from './more-from-author';
 import { ShareSection } from './share-buttons';
 import { CommentsSection } from './comments-section';
 import { LikeButton } from './like-button';
@@ -58,7 +60,7 @@ export function PostContent({ post, fromSeries = false }) {
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-x-4 sm:gap-y-2 text-text-secondary">
           {/* Author */}
           {post.author && (
-            <div className="flex items-center gap-2">
+            <Link href={`/author/${post.author_id}`} className="flex items-center gap-2 hover:text-accent transition-colors">
               {post.author.avatar_url && (
                 <img
                   src={post.author.avatar_url}
@@ -67,7 +69,7 @@ export function PostContent({ post, fromSeries = false }) {
                 />
               )}
               <span className="font-medium">{post.author.name}</span>
-            </div>
+            </Link>
           )}
 
           <span aria-hidden="true" className="hidden sm:inline">·</span>
@@ -124,6 +126,22 @@ export function PostContent({ post, fromSeries = false }) {
         className="prose prose-lg max-w-none"
       />
 
+      {/* Tags Section */}
+      {post.tags && post.tags.length > 0 && (
+        <div className="mt-10 pt-8 border-t border-border">
+          <div className="flex flex-wrap gap-2">
+            {post.tags.map((tag) => (
+              <span
+                key={tag}
+                className="px-3 py-1.5 text-sm bg-surface-inset hover:bg-hover text-text-secondary rounded-full border border-border transition-colors cursor-default"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 
         Series Navigation vs Related Posts:
         - If user came from series page → Show full prev/next navigation
@@ -140,11 +158,12 @@ export function PostContent({ post, fromSeries = false }) {
             </div>
           )}
           
-          {/* Show related posts */}
-          <RelatedPosts 
-            postId={post.id} 
-            seriesId={post.series_id} 
-            currentSlug={post.slug} 
+          {/* Show more posts from author */}
+          <MoreFromAuthor 
+            authorId={post.author_id} 
+            authorName={post.author?.name}
+            authorAvatar={post.author?.avatar_url}
+            currentPostId={post.id}
           />
         </>
       )}
@@ -159,17 +178,19 @@ export function PostContent({ post, fromSeries = false }) {
       {post.author?.bio && (
         <footer className="mt-12 pt-8 border-t border-border">
           <div className="flex items-start gap-4">
-            {post.author.avatar_url && (
-              <img
-                src={post.author.avatar_url}
-                alt={post.author.name}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-            )}
+            <Link href={`/author/${post.author_id}`}>
+              {post.author.avatar_url && (
+                <img
+                  src={post.author.avatar_url}
+                  alt={post.author.name}
+                  className="w-12 h-12 rounded-full object-cover hover:opacity-80 transition-opacity"
+                />
+              )}
+            </Link>
             <div className="flex-1">
-              <p className="font-semibold text-text-primary">
+              <Link href={`/author/${post.author_id}`} className="font-semibold text-text-primary hover:text-accent transition-colors">
                 {post.author.name}
-              </p>
+              </Link>
               <p className="text-text-secondary mt-1">
                 {post.author.bio}
               </p>
@@ -217,6 +238,30 @@ export function PostContent({ post, fromSeries = false }) {
             </div>
           </div>
         </footer>
+      )}
+
+      {/* Related Posts at the very end */}
+      {!fromSeries && (
+        <>
+          <RelatedPosts 
+            postId={post.id} 
+            seriesId={post.series_id} 
+            currentSlug={post.slug} 
+          />
+          
+          {/* See more recommendations */}
+          <div className="mt-8 text-center">
+            <Link 
+              href="/articles"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-surface border border-border hover:border-accent/50 hover:bg-accent/5 text-text-primary font-medium transition-all duration-300"
+            >
+              See more recommendations
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
+        </>
       )}
     </article>
   );

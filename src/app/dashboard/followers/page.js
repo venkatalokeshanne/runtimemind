@@ -43,7 +43,7 @@ function UserCard({ user, currentUserId, isFollowing: initialFollowing, showFoll
 
   return (
     <div className="flex items-center justify-between py-4 border-b border-border last:border-0">
-      <Link href={`/articles?author=${user.id}`} className="flex items-center gap-3 group">
+      <Link href={`/author/${user.id}`} className="flex items-center gap-3 group">
         {user.avatar_url ? (
           <Image
             src={user.avatar_url}
@@ -115,10 +115,10 @@ export default function FollowersPage() {
       setLoading(true);
       
       // Get counts
-      const fCount = await getFollowerCount(user.id);
-      const fgCount = await getFollowingCount(user.id);
-      setFollowerCount(fCount);
-      setFollowingCount(fgCount);
+      const { count: fCount } = await getFollowerCount(user.id);
+      const { count: fgCount } = await getFollowingCount(user.id);
+      setFollowerCount(fCount || 0);
+      setFollowingCount(fgCount || 0);
 
       // Get followers
       const { data: followersList } = await getFollowers(user.id);

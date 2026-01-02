@@ -4,14 +4,12 @@
  * ============================================================================
  * 
  * Data access layer for post comments.
- * Handles fetching, creating, updating, and deleting comments.
- * 
- * ============================================================================
+ * Uses raw fetch to avoid Supabase client issues.
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabaseFetch } from '@/lib/supabase/fetch';
 
-// Check if Supabase is configured (has URL and key)
+// Check if Supabase is configured
 const isSupabaseConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -25,7 +23,7 @@ const mockComments = [
     author_id: '1',
     content: 'Great article! This really helped me understand the concept better.',
     parent_id: null,
-    created_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+    created_at: new Date(Date.now() - 86400000).toISOString(),
     updated_at: new Date(Date.now() - 86400000).toISOString(),
     author: {
       id: '1',
@@ -39,7 +37,7 @@ const mockComments = [
     author_id: '2',
     content: 'Thanks for the detailed explanation. Would love to see more content like this!',
     parent_id: null,
-    created_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+    created_at: new Date(Date.now() - 3600000).toISOString(),
     updated_at: new Date(Date.now() - 3600000).toISOString(),
     author: {
       id: '2',
@@ -53,7 +51,7 @@ const mockComments = [
     author_id: '3',
     content: 'I agree! The examples were very clear.',
     parent_id: '1',
-    created_at: new Date(Date.now() - 1800000).toISOString(), // 30 mins ago
+    created_at: new Date(Date.now() - 1800000).toISOString(),
     updated_at: new Date(Date.now() - 1800000).toISOString(),
     author: {
       id: '3',
@@ -65,58 +63,40 @@ const mockComments = [
 
 /**
  * Fetch all comments for a post
- * @param {string} postId - The post ID
- * @returns {Promise<{data: Comment[], error: Object|null}>}
  */
 export async function getCommentsByPostId(postId) {
   if (!isSupabaseConfigured) {
-    // Filter mock comments for this post
     const comments = mockComments.filter(c => c.post_id === postId || c.post_id === '1');
     return { data: comments, error: null };
   }
 
   try {
-    // First, get the comments
-    const { data: commentsData, error: commentsError } = await supabase
-      .from('comments')
-      .select(`
-        id,
-        post_id,
-        author_id,
-        content,
-        parent_id,
-        created_at,
-        updated_at
-      `)
-      .eq('post_id', postId)
-      .order('created_at', { ascending: true });
+    // Get comments
+    const { data: commentsData, error: commentsError } = await supabaseFetch(
+      `comments?select=id,post_id,author_id,content,parent_id,created_at,updated_at&post_id=eq.${postId}&order=created_at.asc`
+    );
 
     if (commentsError) {
       console.error('Error fetching comments:', commentsError);
       return { data: [], error: commentsError };
     }
 
-    // Then, get the unique author IDs
-    const authorIds = [...new Set((commentsData || []).map(comment => comment.author_id))];
-    
-    if (authorIds.length === 0) {
+    if (!commentsData?.length) {
       return { data: [], error: null };
     }
 
-    // Fetch author profiles separately
-    const { data: profilesData, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, name, avatar_url')
-      .in('id', authorIds);
+    // Get unique author IDs
+    const authorIds = [...new Set(commentsData.map(c => c.author_id))];
+
+    // Fetch profiles
+    const { data: profilesData, error: profilesError } = await supabaseFetch(
+      `profiles?select=id,name,avatar_url&id=in.(${authorIds.join(',')})`
+    );
 
     if (profilesError) {
       console.error('Error fetching author profiles:', profilesError);
-      // Return comments without author data rather than failing
       return { 
-        data: (commentsData || []).map(comment => ({
-          ...comment,
-          author: null
-        })), 
+        data: commentsData.map(c => ({ ...c, author: null })), 
         error: null 
       };
     }
@@ -127,7 +107,7 @@ export async function getCommentsByPostId(postId) {
       return acc;
     }, {});
 
-    const commentsWithAuthors = (commentsData || []).map(comment => ({
+    const commentsWithAuthors = commentsData.map(comment => ({
       ...comment,
       author: profilesMap[comment.author_id] || null
     }));
@@ -138,154 +118,156 @@ export async function getCommentsByPostId(postId) {
     console.error('Exception in getCommentsByPostId:', err);
     return { data: [], error: { message: 'Failed to fetch comments' } };
   }
-
-  return { data: data || [], error };
 }
 
 /**
  * Get comment count for a post
- * @param {string} postId - The post ID
- * @returns {Promise<{count: number, error: Object|null}>}
  */
 export async function getCommentCount(postId) {
   if (!isSupabaseConfigured) {
-    const count = mockComments.filter(c => c.post_id === postId || c.post_id === '1').length;
-    return { count, error: null };
+    const comments = mockComments.filter(c => c.post_id === postId || c.post_id === '1');
+    return { count: comments.length, error: null };
   }
 
-  const { count, error } = await supabase
-    .from('comments')
-    .select('*', { count: 'exact', head: true })
-    .eq('post_id', postId);
+  const { data, error } = await supabaseFetch(
+    `comments?select=id&post_id=eq.${postId}`
+  );
 
-  return { count: count || 0, error };
+  return { count: Array.isArray(data) ? data.length : 0, error };
 }
 
 /**
  * Create a new comment
- * @param {Object} params
- * @param {string} params.postId - The post ID
- * @param {string} params.userId - The user ID
- * @param {string} params.content - The comment content
- * @param {string|null} params.parentId - Parent comment ID for replies
- * @returns {Promise<{data: Comment|null, error: Object|null}>}
  */
 export async function createComment({ postId, authorId, content, parentId = null }) {
+  if (!authorId) {
+    return { data: null, error: { message: 'User must be logged in' } };
+  }
+
   if (!isSupabaseConfigured) {
     const newComment = {
-      id: String(mockComments.length + 1),
+      id: String(Date.now()),
       post_id: postId,
       author_id: authorId,
       content,
       parent_id: parentId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      author: {
-        id: authorId,
-        name: 'Current User',
-        avatar_url: null,
-      },
+      author: { id: authorId, name: 'Current User', avatar_url: null },
     };
     mockComments.push(newComment);
     return { data: newComment, error: null };
   }
 
-  const { data, error } = await supabase
-    .from('comments')
-    .insert({
-      post_id: postId,
-      author_id: authorId,
-      content,
-      parent_id: parentId,
-    })
-    .select(`
-      id,
-      post_id,
-      author_id,
-      content,
-      parent_id,
-      created_at,
-      updated_at
-    `)
-    .single();
+  const body = {
+    post_id: postId,
+    author_id: authorId,
+    content,
+  };
+  if (parentId) {
+    body.parent_id = parentId;
+  }
+
+  const { data, error } = await supabaseFetch('comments?select=*', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=representation' },
+    body: JSON.stringify(body),
+  });
 
   if (error) {
+    console.error('Error creating comment:', error);
     return { data: null, error };
   }
 
-  // Fetch author profile separately
-  const { data: authorProfile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id, name, avatar_url')
-    .eq('id', authorId)
-    .single();
+  // Fetch author profile for the new comment
+  const comment = Array.isArray(data) ? data[0] : data;
+  if (comment) {
+    const { data: profile } = await supabaseFetch(
+      `profiles?select=id,name,avatar_url&id=eq.${authorId}&limit=1`
+    );
+    comment.author = Array.isArray(profile) ? profile[0] : null;
+  }
 
-  // Return comment with author data
-  const commentWithAuthor = {
-    ...data,
-    author: authorProfile || null
-  };
-
-  return { data: commentWithAuthor, error: null };
+  return { data: comment, error: null };
 }
 
 /**
  * Update a comment
- * @param {string} commentId - The comment ID
- * @param {string} content - The new content
- * @returns {Promise<{data: Comment|null, error: Object|null}>}
  */
-export async function updateComment(commentId, content) {
-  if (!isSupabaseConfigured) {
-    const comment = mockComments.find(c => c.id === commentId);
-    if (comment) {
-      comment.content = content;
-      comment.updated_at = new Date().toISOString();
-    }
-    return { data: comment || null, error: null };
+export async function updateComment(commentId, content, authorId) {
+  if (!authorId) {
+    return { data: null, error: { message: 'User must be logged in' } };
   }
 
-  const { data, error } = await supabase
-    .from('comments')
-    .update({ content })
-    .eq('id', commentId)
-    .select(`
-      id,
-      post_id,
-      author_id,
-      content,
-      parent_id,
-      created_at,
-      updated_at,
-      author:profiles!author_id (
-        id,
-        name,
-        avatar_url
-      )
-    `)
-    .single();
+  if (!isSupabaseConfigured) {
+    const comment = mockComments.find(c => c.id === commentId);
+    if (comment && comment.author_id === authorId) {
+      comment.content = content;
+      comment.updated_at = new Date().toISOString();
+      return { data: comment, error: null };
+    }
+    return { data: null, error: { message: 'Comment not found or unauthorized' } };
+  }
 
-  return { data, error };
+  const { data, error } = await supabaseFetch(
+    `comments?id=eq.${commentId}&author_id=eq.${authorId}&select=*`,
+    {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=representation' },
+      body: JSON.stringify({ content }),
+    }
+  );
+
+  return { data: Array.isArray(data) ? data[0] : data, error };
 }
 
 /**
  * Delete a comment
- * @param {string} commentId - The comment ID
- * @returns {Promise<{success: boolean, error: Object|null}>}
  */
-export async function deleteComment(commentId) {
-  if (!isSupabaseConfigured) {
-    const index = mockComments.findIndex(c => c.id === commentId);
-    if (index > -1) {
-      mockComments.splice(index, 1);
-    }
-    return { success: true, error: null };
+export async function deleteComment(commentId, authorId) {
+  if (!authorId) {
+    return { success: false, error: { message: 'User must be logged in' } };
   }
 
-  const { error } = await supabase
-    .from('comments')
-    .delete()
-    .eq('id', commentId);
+  if (!isSupabaseConfigured) {
+    const index = mockComments.findIndex(c => c.id === commentId && c.author_id === authorId);
+    if (index !== -1) {
+      mockComments.splice(index, 1);
+      return { success: true, error: null };
+    }
+    return { success: false, error: { message: 'Comment not found or unauthorized' } };
+  }
+
+  const { error } = await supabaseFetch(
+    `comments?id=eq.${commentId}&author_id=eq.${authorId}`,
+    { method: 'DELETE' }
+  );
 
   return { success: !error, error };
+}
+
+/**
+ * Get a single comment by ID
+ */
+export async function getCommentById(commentId) {
+  if (!isSupabaseConfigured) {
+    const comment = mockComments.find(c => c.id === commentId);
+    return { data: comment || null, error: comment ? null : { message: 'Not found' } };
+  }
+
+  const { data, error } = await supabaseFetch(
+    `comments?select=id,post_id,author_id,content,parent_id,created_at,updated_at&id=eq.${commentId}&limit=1`
+  );
+
+  const comment = Array.isArray(data) ? data[0] : null;
+
+  if (comment) {
+    // Fetch author profile
+    const { data: profile } = await supabaseFetch(
+      `profiles?select=id,name,avatar_url&id=eq.${comment.author_id}&limit=1`
+    );
+    comment.author = Array.isArray(profile) ? profile[0] : null;
+  }
+
+  return { data: comment, error };
 }

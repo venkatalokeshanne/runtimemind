@@ -1,9 +1,10 @@
 /**
  * AI Content Generation API Route
- * Uses Groq's free LLM API for generating title, excerpt, and tags
+ * Uses Groq's free LLM API for generating title, excerpt, tags, and topic
  */
 
 import { NextResponse } from 'next/server';
+import { TOPIC_LIST } from '@/lib/constants';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
@@ -75,6 +76,24 @@ ${truncatedContent}
 
 Respond with ONLY a JSON array of tag strings ordered by SEO importance (most important first). Example: ["react hooks tutorial", "usestate guide", "react for beginners", "javascript state management", "frontend development", "web development 2024"]`;
       responseFormat = 'tags';
+    } else if (type === 'topic') {
+      // Topic selection from predefined list
+      const topicListStr = TOPIC_LIST.join(', ');
+      prompt = `You are a content categorization expert. Based on the following blog post content, choose the SINGLE most appropriate topic from this exact list:
+
+${topicListStr}
+
+Rules:
+1. Choose ONLY ONE topic from the list above
+2. Pick the topic that best matches the main subject of the content
+3. If content spans multiple topics, choose the PRIMARY one
+4. Respond with the EXACT topic name as it appears in the list
+
+Content:
+${truncatedContent}
+
+Respond with ONLY the topic name, nothing else. Example: Web Development`;
+      responseFormat = 'topic';
     } else if (type === 'all') {
       prompt = `You are an SEO expert. Based on the following blog post content, generate optimized metadata that will help this article rank #1 in search engines.
 
@@ -152,6 +171,17 @@ Respond with ONLY valid JSON in this exact format:
         result = JSON.parse(generatedText);
       } else if (responseFormat === 'all') {
         result = JSON.parse(generatedText);
+      } else if (responseFormat === 'topic') {
+        // Validate topic is from our list
+        const cleanedTopic = generatedText.trim();
+        if (TOPIC_LIST.includes(cleanedTopic)) {
+          result = cleanedTopic;
+        } else {
+          // Find closest match or default to 'Other'
+          const lowerTopic = cleanedTopic.toLowerCase();
+          const match = TOPIC_LIST.find(t => t.toLowerCase() === lowerTopic);
+          result = match || 'Other';
+        }
       } else {
         result = generatedText;
       }

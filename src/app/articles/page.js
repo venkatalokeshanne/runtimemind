@@ -15,31 +15,33 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, TrendingUp, Clock, Sparkles } from 'lucide-react';
-import { getPublishedPosts, getPublishedPostCount, getTrendingTags } from '@/modules/articles/services';
-import { PostGrid } from '@/modules/articles/components';
+import { ArrowRight, TrendingUp, Clock, Sparkles, Folder } from 'lucide-react';
+import { getPublishedPosts, getPublishedPostCount, getTrendingTags, getPostsByTopic, getTopicsWithPosts } from '@/modules/articles/services';
+import { PostGrid, ImagePlaceholder } from '@/modules/articles/components';
 import { formatDate, calculateReadingTime } from '@/lib/utils';
 
 /**
  * Page metadata for SEO
  */
 export const metadata = {
-  title: 'Articles - Tech Tutorials & Programming Guides',
-  description: 'Explore our collection of in-depth tech articles, programming tutorials, and software development guides. Learn web development, coding best practices, and more.',
-  keywords: ['tech articles', 'programming tutorials', 'web development', 'coding guides', 'software development'],
+  title: 'Articles - Read Stories, Tutorials & Blog Posts',
+  description: 'Discover articles, stories, tutorials, and blog posts from writers around the world. Browse content on technology, business, lifestyle, creativity and more.',
+  keywords: ['articles', 'blog posts', 'stories', 'tutorials', 'tech articles', 'programming tutorials', 'creative writing', 'lifestyle', 'business'],
   alternates: {
     canonical: 'https://runtimemind.com/articles',
   },
   openGraph: {
-    title: 'Articles - Tech Tutorials & Programming Guides | RuntimeMind',
-    description: 'Explore our collection of in-depth tech articles, programming tutorials, and software development guides.',
+    title: 'Articles - Read Stories, Tutorials & Blog Posts | RuntimeMind',
+    description: 'Discover articles, stories, tutorials, and blog posts from writers around the world.',
     url: 'https://runtimemind.com/articles',
     type: 'website',
+    images: [{ url: '/api/og?title=Articles&type=page', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Articles | RuntimeMind',
-    description: 'Explore our collection of in-depth tech articles and programming tutorials.',
+    description: 'Discover articles, stories, tutorials, and blog posts from writers around the world.',
+    images: ['/api/og?title=Articles&type=page'],
   },
 };
 
@@ -52,7 +54,9 @@ export const revalidate = 60;
 export default async function BlogPage() {
   // Fetch all published posts
   const { data: posts, error } = await getPublishedPosts({ limit: 20 });
+  
   const { data: tags } = await getTrendingTags();
+  const { data: topics } = await getTopicsWithPosts({ limit: 10 });
   
   // Split posts: first for featured, rest for grid
   const featuredPost = posts?.[0];
@@ -108,12 +112,18 @@ export default async function BlogPage() {
                             priority
                           />
                         ) : (
-                          <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-purple-500/20" />
+                          <ImagePlaceholder title={featuredPost.title} type="article" showFullTitle />
                         )}
-                        <div className="absolute top-4 left-4">
+                        <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
                           <span className="px-3 py-1 rounded-full bg-white/90 dark:bg-black/70 backdrop-blur-sm text-xs font-medium text-text-primary">
                             Featured
                           </span>
+                          {featuredPost.topic && (
+                            <span className="px-3 py-1 rounded-full bg-accent/90 backdrop-blur-sm text-xs font-medium text-white flex items-center gap-1">
+                              <Folder className="w-3 h-3" />
+                              {featuredPost.topic}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="space-y-3">
@@ -162,17 +172,25 @@ export default async function BlogPage() {
                   {secondaryPosts.map((post, index) => (
                     <Link key={post.id} href={`/articles/${post.slug}`} className="group block">
                       <article className="flex gap-5 p-4 rounded-xl border border-border hover:border-accent/30 hover:bg-surface transition-all">
-                        {post.cover_image_url && (
-                          <div className="relative w-28 h-28 rounded-lg overflow-hidden bg-surface-inset flex-shrink-0">
+                        <div className="relative w-28 h-28 rounded-lg overflow-hidden bg-surface-inset flex-shrink-0">
+                          {post.cover_image_url ? (
                             <Image
                               src={post.cover_image_url}
                               alt={post.title}
                               fill
                               className="object-cover group-hover:scale-105 transition-transform duration-500"
                             />
-                          </div>
-                        )}
+                          ) : (
+                            <ImagePlaceholder type="article" hideInitial />
+                          )}
+                        </div>
                         <div className="flex-1 min-w-0 flex flex-col justify-center">
+                          {post.topic && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-xs font-medium w-fit mb-1.5">
+                              <Folder className="w-3 h-3" />
+                              {post.topic}
+                            </span>
+                          )}
                           <h3 className="font-semibold text-text-primary group-hover:text-accent transition-colors line-clamp-2 mb-2">
                             {post.title}
                           </h3>
@@ -195,8 +213,8 @@ export default async function BlogPage() {
             </div>
           </section>
 
-          {/* Tags/Categories Bar */}
-          {tags && tags.length > 0 && (
+          {/* Trending Topics Bar */}
+          {topics && topics.length > 0 && (
             <section className="border-b border-border bg-surface/50">
               <div className="max-w-6xl mx-auto px-6 py-4">
                 <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide">
@@ -204,13 +222,14 @@ export default async function BlogPage() {
                     <TrendingUp className="w-4 h-4" />
                     Trending:
                   </span>
-                  {tags.slice(0, 8).map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1.5 rounded-full bg-background border border-border text-sm text-text-primary hover:border-accent/50 cursor-pointer transition-colors flex-shrink-0"
+                  {topics.map((t) => (
+                    <Link
+                      key={t}
+                      href={`/articles/topic/${encodeURIComponent(t)}`}
+                      className="px-3 py-1.5 rounded-full text-sm flex-shrink-0 transition-colors bg-background border border-border text-text-primary hover:border-accent/50 hover:text-accent"
                     >
-                      {tag}
-                    </span>
+                      {t}
+                    </Link>
                   ))}
                 </div>
               </div>

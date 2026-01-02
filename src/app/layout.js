@@ -68,14 +68,21 @@ const geistMono = Geist_Mono({
 export const metadata = {
   metadataBase: new URL('https://runtimemind.com'),
   title: {
-    default: 'RuntimeMind - Tech Articles & Programming Tutorials',
+    default: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
     template: '%s | RuntimeMind',
   },
-  description: 'Explore in-depth tech articles, programming tutorials, and software development insights. Clean design, focused reading experience for developers.',
-  keywords: ['tech articles', 'programming tutorials', 'software development', 'web development', 'coding', 'technology blog', 'developer resources'],
+  description: 'Write and publish articles, stories, tutorials, and blog posts. A free platform for writers, developers, and creators to share ideas with the world.',
+  keywords: ['write articles online', 'publish blog posts', 'free blogging platform', 'write stories', 'share ideas', 'tech articles', 'programming tutorials', 'content writing', 'blogging site', 'article publishing', 'creative writing platform', 'developer blog'],
   authors: [{ name: 'RuntimeMind', url: 'https://runtimemind.com' }],
   creator: 'RuntimeMind',
   publisher: 'RuntimeMind',
+  
+  // Favicon configuration
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
   
   // Canonical and alternates
   alternates: {
@@ -91,14 +98,14 @@ export const metadata = {
     locale: 'en_US',
     url: 'https://runtimemind.com',
     siteName: 'RuntimeMind',
-    title: 'RuntimeMind - Tech Articles & Programming Tutorials',
-    description: 'Explore in-depth tech articles, programming tutorials, and software development insights.',
+    title: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
+    description: 'Write and publish articles, stories, tutorials, and blog posts. A free platform for writers and creators to share ideas.',
     images: [
       {
-        url: '/og-default.png',
+        url: '/api/og?title=RuntimeMind&type=website',
         width: 1200,
         height: 630,
-        alt: 'RuntimeMind',
+        alt: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
       },
     ],
   },
@@ -108,9 +115,9 @@ export const metadata = {
     card: 'summary_large_image',
     site: '@runtimemind',
     creator: '@runtimemind',
-    title: 'RuntimeMind - Tech Articles & Programming Tutorials',
-    description: 'Explore in-depth tech articles, programming tutorials, and software development insights.',
-    images: ['/og-default.png'],
+    title: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
+    description: 'Write and publish articles, stories, tutorials, and blog posts. A free platform for writers and creators.',
+    images: ['/api/og?title=RuntimeMind&type=website'],
   },
   
   // Robots

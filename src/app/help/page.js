@@ -39,6 +39,17 @@ export const metadata = {
   alternates: {
     canonical: 'https://runtimemind.com/help',
   },
+  openGraph: {
+    title: 'Help & Documentation | RuntimeMind',
+    description: 'Complete guide to writing and publishing articles on RuntimeMind.',
+    url: 'https://runtimemind.com/help',
+    images: [{ url: '/api/og?title=Help%20%26%20Documentation&type=page', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Help & Documentation | RuntimeMind',
+    images: ['/api/og?title=Help%20%26%20Documentation&type=page'],
+  },
 };
 
 // Section component for consistent styling
