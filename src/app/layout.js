@@ -28,8 +28,7 @@
 
 import { Suspense } from 'react';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { ThemeProvider } from '@/lib/theme';
-import { AuthProvider } from '@/lib/auth';
+import ClientProviders from '@/components/ClientProviders';
 import { SiteHeader, SiteFooter } from '@/modules/layout/components';
 import './globals.css';
 import WriteFloating from '@/components/WriteFloating';
@@ -259,8 +258,7 @@ export default function RootLayout({ children }) {
           min-h-screen flex flex-col
         `}
       >
-        <ThemeProvider defaultTheme="system">
-          <AuthProvider>
+          <ClientProviders>
             <Suspense fallback={<div className="h-16 bg-surface border-b border-border" />}>
               <SiteHeader siteName="RuntimeMind" />
             </Suspense>
@@ -273,8 +271,7 @@ export default function RootLayout({ children }) {
             <SiteFooter siteName="RuntimeMind" />
             <WriteFloating />
             <Analytics/>
-          </AuthProvider>
-        </ThemeProvider>
+          </ClientProviders>
       </body>
     </html>
   );

@@ -19,6 +19,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { supabaseFetch } from '@/lib/supabase/fetch';
 
 /**
  * Auth context with default values
@@ -93,17 +94,30 @@ export function AuthProvider({ children }) {
         .eq('id', authUser.id)
         .single();
 
-      if (error) {
-        console.warn('Profile fetch warning:', error.message);
+      // If client returns an error or no profile, try REST fallback (helps when client env is misconfigured)
+      let finalProfile = profile;
+      if (error || !finalProfile) {
+        console.warn('Profile fetch via client failed or returned empty, attempting REST fallback:', error?.message || 'no data');
+        try {
+          const endpoint = `profiles?select=name,avatar_url,bio,website&id=eq.${encodeURIComponent(authUser.id)}`;
+          const { data: restData, error: restError } = await supabaseFetch(endpoint, { method: 'GET' });
+          if (!restError && Array.isArray(restData) && restData.length > 0) {
+            finalProfile = restData[0];
+          } else if (restError) {
+            console.warn('REST profile fetch failed:', restError.message || restError);
+          }
+        } catch (restErr) {
+          console.error('Unexpected REST fallback error:', restErr);
+        }
       }
 
       // Merge auth user with profile data
       return {
         ...authUser,
-        name: getDisplayName(profile, authUser.user_metadata, authUser.email),
-        avatar_url: profile?.avatar_url || authUser.user_metadata?.avatar_url || null,
-        bio: profile?.bio || null,
-        website: profile?.website || null,
+        name: getDisplayName(finalProfile, authUser.user_metadata, authUser.email),
+        avatar_url: finalProfile?.avatar_url || authUser.user_metadata?.avatar_url || null,
+        bio: finalProfile?.bio || null,
+        website: finalProfile?.website || null,
       };
     } catch (error) {
       console.error('Error fetching profile:', error);

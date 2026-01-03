@@ -35,10 +35,11 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    const { error: signInError } = await signIn(email, password);
+    // NextAuth credentials signIn
+    const result = await signIn('credentials', { redirect: false, email, password });
 
-    if (signInError) {
-      setError(signInError.message);
+    if (result?.error) {
+      setError(result.error);
       setLoading(false);
       return;
     }

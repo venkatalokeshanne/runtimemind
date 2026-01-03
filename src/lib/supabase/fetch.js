@@ -13,9 +13,18 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 /**
  * Get auth token from localStorage
  */
-export function getAuthToken() {
+export async function getAuthToken() {
   if (typeof window === 'undefined') return null;
   try {
+    // Try NextAuth session first (client-side only)
+    try {
+      const { getSession } = await import('next-auth/react');
+      const session = await getSession();
+      if (session?.accessToken) return session.accessToken;
+      if (session?.accessToken === undefined && session?.user?.accessToken) return session.user.accessToken;
+    } catch (e) {
+      // ignore if next-auth not available or fails
+    }
     // First check our custom storage key
     const customKey = 'runtimemind-auth';
     const customStored = localStorage.getItem(customKey);
@@ -59,12 +68,17 @@ export function getAuthToken() {
  * @returns {Promise<{data: any, error: any}>}
  */
 export async function supabaseFetch(endpoint, options = {}) {
-  const token = getAuthToken();
+  // Allow explicit token override
+  if (options.token) {
+    options.headers = { ...(options.headers || {}), Authorization: `Bearer ${options.token}` };
+  }
+
+  const token = options.headers?.Authorization ? null : await getAuthToken();
   
   const headers = {
-    'apikey': SUPABASE_ANON_KEY,
+    apikey: SUPABASE_ANON_KEY,
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
 

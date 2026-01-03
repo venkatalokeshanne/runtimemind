@@ -23,7 +23,7 @@ import { Label } from '@/ui/label';
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signUp } = useAuth();
+  // signUp handled via Supabase REST signup endpoint
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -51,17 +51,34 @@ export default function SignupPage() {
 
     setLoading(true);
 
-    const { data, error: signUpError } = await signUp(email, password, name);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          options: { data: { name } },
+        }),
+      });
 
-    if (signUpError) {
-      setError(signUpError.message);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data?.error_description || data?.message || 'Signup failed');
+        setLoading(false);
+        return;
+      }
+
+      setSuccess(true);
+    } catch (err) {
+      setError(err.message || 'Signup failed');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Show success message (email confirmation may be required)
-    setSuccess(true);
-    setLoading(false);
   }
 
   // Success state
