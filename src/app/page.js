@@ -107,8 +107,8 @@ export default async function HomePage() {
               <div className="flex flex-wrap justify-center gap-2 mt-2">
                 {topics.map((topic) => (
                   <Link
-                    key={slugify(topic)}
-                    href={`/articles/topic/${slugify(topic)}`}
+                    key={topic}
+                    href={`/articles/topic/${topic}`}
                     className="px-3 py-1 rounded-full bg-surface-inset text-text-secondary border border-border text-xs hover:bg-accent/10 hover:text-accent transition-colors"
                   >
                     #{topic}
