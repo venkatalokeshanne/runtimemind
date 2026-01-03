@@ -126,43 +126,9 @@ export function SiteHeader({ siteName = 'Runtimemind' }) {
           <div className="flex h-16 items-center justify-between gap-4">
             
             {/* Logo */}
-            <Link 
-              href="/" 
-              className="group flex items-center gap-2.5 font-bold text-xl shrink-0"
-            >
-              {/* Creative/Artistic Logo - Flowing ink/brush concept */}
-              <div className="relative w-10 h-10">
-                <svg 
-                  viewBox="0 0 44 44" 
-                  className="w-full h-full"
-                  aria-hidden="true"
-                >
-                  <defs>
-                    <linearGradient id="inkFlow" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#6366f1" />
-                      <stop offset="50%" stopColor="#8b5cf6" />
-                      <stop offset="100%" stopColor="#ec4899" />
-                    </linearGradient>
-                  </defs>
-                  
-                  {/* Main flowing ink shape - abstract creative form */}
-                  <path
-                    d="M8 36 C8 36 12 28 16 24 C20 20 18 14 22 10 C26 6 32 8 34 14 C36 20 32 24 28 28 C24 32 28 38 36 36"
-                    fill="none"
-                    stroke="url(#inkFlow)"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    className="group-hover:stroke-[3.5px] transition-all duration-300"
-                  />
-                  
-                  {/* Ink splatter dots - creativity bursting */}
-                  <circle cx="38" cy="12" r="2.5" fill="#ec4899" className="group-hover:scale-125 origin-center transition-transform duration-300" />
-                  <circle cx="34" cy="6" r="1.5" fill="#8b5cf6" opacity="0.8" />
-                  <circle cx="40" cy="18" r="1.5" fill="#6366f1" opacity="0.7" />
-                  
-                  {/* Pen tip at start */}
-                  <circle cx="8" cy="36" r="3" fill="url(#inkFlow)" />
-                </svg>
+            <Link href="/" className="group flex items-center gap-2.5 font-bold text-xl shrink-0">
+              <div className="relative w-10 h-10 overflow-hidden rounded">
+                <img src="/logo.png" alt={`${siteName} logo`} className="w-full h-full object-cover" />
               </div>
               {/* Logo Text */}
               <span className="text-text-primary group-hover:text-accent transition-colors duration-200 hidden sm:block">

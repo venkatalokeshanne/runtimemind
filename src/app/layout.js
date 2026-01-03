@@ -72,17 +72,33 @@ export const metadata = {
     default: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
     template: '%s | RuntimeMind',
   },
-  description: 'Write and publish articles, stories, tutorials, and blog posts. A free platform for writers, developers, and creators to share ideas with the world.',
-  keywords: ['write articles online', 'publish blog posts', 'free blogging platform', 'write stories', 'share ideas', 'tech articles', 'programming tutorials', 'content writing', 'blogging site', 'article publishing', 'creative writing platform', 'developer blog'],
+  description: "Start writing where ideas come to life. Write, publish, and share articles, stories, tutorials, and blog posts on RuntimeMind — a free, creator-first platform for writers, developers, and thinkers to express their ideas with the world.",
+  keywords: [
+  "write articles",
+  "publish blog posts",
+  "free writing platform",
+  "start writing online",
+  "publish articles online",
+  "write stories online",
+  "share ideas",
+  "developer blogging platform",
+  "tech blogs",
+  "programming tutorials",
+  "content creation platform",
+  "creative writing website",
+  "article publishing platform",
+  "blogging for developers",
+  "RuntimeMind"
+],
   authors: [{ name: 'RuntimeMind', url: 'https://www.runtimemind.com' }],
   creator: 'RuntimeMind',
   publisher: 'RuntimeMind',
   
   // Favicon configuration
   icons: {
-    icon: '/icon.svg',
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
   },
   
   // Canonical and alternates
@@ -100,7 +116,7 @@ export const metadata = {
     url: 'https://www.runtimemind.com',
     siteName: 'RuntimeMind',
     title: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
-    description: 'Write and publish articles, stories, tutorials, and blog posts. A free platform for writers and creators to share ideas.',
+    description: "Start writing where ideas come to life. Write, publish, and share articles, stories, tutorials, and blog posts on RuntimeMind — a free, creator-first platform for writers, developers, and thinkers to express their ideas with the world.",
     images: [
       {
         url: '/runtimemindhome.png',
@@ -117,7 +133,7 @@ export const metadata = {
     site: '@runtimemind',
     creator: '@runtimemind',
     title: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
-    description: 'Write and publish articles, stories, tutorials, and blog posts. A free platform for writers and creators.',
+    description: "Start writing where ideas come to life. Write, publish, and share articles, stories, tutorials, and blog posts on RuntimeMind — a free, creator-first platform for writers, developers, and thinkers to express their ideas with the world.",
     images: ['/runtimemindhome.png'],
   },
   
@@ -184,7 +200,7 @@ const jsonLd = {
       '@id': 'https://www.runtimemind.com/#website',
       url: 'https://www.runtimemind.com',
       name: 'RuntimeMind',
-      description: 'Tech articles, programming tutorials, and software development insights.',
+      description: "Start writing where ideas come to life. Write, publish, and share articles, stories, tutorials, and blog posts on RuntimeMind — a free, creator-first platform for writers, developers, and thinkers to express their ideas with the world.",
       publisher: {
         '@id': 'https://www.runtimemind.com/#organization',
       },
