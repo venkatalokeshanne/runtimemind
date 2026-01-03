@@ -33,6 +33,7 @@ import { AuthProvider } from '@/lib/auth';
 import { SiteHeader, SiteFooter } from '@/modules/layout/components';
 import './globals.css';
 import WriteFloating from '@/components/WriteFloating';
+import { Analytics } from "@vercel/analytics/next"
 
 /**
  * FONT CONFIGURATION
@@ -271,6 +272,7 @@ export default function RootLayout({ children }) {
             
             <SiteFooter siteName="RuntimeMind" />
             <WriteFloating />
+            <Analytics/>
           </AuthProvider>
         </ThemeProvider>
       </body>
