@@ -66,7 +66,7 @@ export default async function HomePage() {
   const recentPosts = posts?.slice(1, 12) || [];
 
   return (
-    <HomePageClient posts={posts} tags={tags} series={series}>
+    <HomePageClient posts={posts} tags={topics} series={series}>
       {/* JSON-LD Structured Data for SEO */}
       <script
         type="application/ld+json"
