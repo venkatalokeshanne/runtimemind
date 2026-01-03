@@ -7,7 +7,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Feather, BookOpen, Sparkles, Clock, Layers, Users, PenTool, Bookmark, ArrowUpRight, Folder } from 'lucide-react';
-import { getPublishedPosts, getTrendingTags, getPublishedSeries } from '@/modules/articles/services';
+import { getPublishedPosts, getTopicsWithPosts, getPublishedSeries } from '@/modules/articles/services';
+import { slugify } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { HomePageClient } from './components/home-page-client';
 
@@ -58,7 +59,7 @@ export const revalidate = 60;
 
 export default async function HomePage() {
   const { data: posts } = await getPublishedPosts({ limit: 12 });
-  const { data: tags } = await getTrendingTags({ limit: 8 });
+  const { data: topics } = await getTopicsWithPosts({ limit: 8 });
   const { data: series } = await getPublishedSeries({ limit: 3 });
 
   const featuredPost = posts?.[0];
@@ -102,15 +103,15 @@ export default async function HomePage() {
             <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-6">
               Write articles, share stories, publish tutorials. A free platform for writers, developers, and creators to share their voice with the world.
             </p>
-            {tags && tags.length > 0 && (
+            {topics && topics.length > 0 && (
               <div className="flex flex-wrap justify-center gap-2 mt-2">
-                {tags.map((tag) => (
+                {topics.map((topic) => (
                   <Link
-                    key={tag.slug}
-                    href={`/articles/tag/${tag.slug}`}
+                    key={slugify(topic)}
+                    href={`/articles/topic/${slugify(topic)}`}
                     className="px-3 py-1 rounded-full bg-surface-inset text-text-secondary border border-border text-xs hover:bg-accent/10 hover:text-accent transition-colors"
                   >
-                    #{tag.name}
+                    #{topic}
                   </Link>
                 ))}
               </div>
@@ -406,7 +407,7 @@ export default async function HomePage() {
       )}
 
       {/* Topics to Explore - Visual Grid */}
-      {tags && tags.length > 0 && (
+      {topics && topics.length > 0 && (
         <section className="container mx-auto px-4 py-16">
           <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-3">
@@ -421,7 +422,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {tags.slice(0, 8).map((tag, idx) => {
+            {topics.slice(0, 8).map((topic, idx) => {
               const gradients = [
                 'from-blue-500/20 to-cyan-500/10',
                 'from-purple-500/20 to-pink-500/10',
@@ -434,8 +435,8 @@ export default async function HomePage() {
               ];
               return (
                 <Link
-                  key={tag.slug}
-                  href={`/articles/tag/${tag.slug}`}
+                  key={slugify(topic)}
+                  href={`/articles/topic/${slugify(topic)}`}
                   className="group relative p-6 rounded-2xl overflow-hidden border border-border hover:border-accent/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${gradients[idx % gradients.length]} opacity-50 group-hover:opacity-80 transition-opacity`} />
@@ -444,10 +445,10 @@ export default async function HomePage() {
                       #
                     </span>
                     <h3 className="font-semibold text-text-primary group-hover:text-accent transition-colors mt-4">
-                      {tag.name}
+                      {topic}
                     </h3>
                     <p className="text-xs text-text-muted mt-1">
-                      {tag.count || 0} articles
+                      0 articles
                     </p>
                   </div>
                   <ArrowUpRight className="absolute top-3 right-3 w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
