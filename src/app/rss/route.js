@@ -11,7 +11,7 @@
 
 import { getPublishedPosts } from '@/modules/articles/services';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://runtimemind.vercel.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.runtimemind.com';
 const SITE_TITLE = 'RuntimeMind';
 const SITE_DESCRIPTION = 'Articles, stories, tutorials, and blog posts from writers and creators. Write and publish for free on RuntimeMind.';
 

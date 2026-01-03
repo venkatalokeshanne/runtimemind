@@ -7,12 +7,12 @@ export const metadata = {
   description: 'Explore curated series of multi-part tutorials, guides and learning paths. Deep dive into complex topics with step-by-step content.',
   keywords: ['series', 'tutorial series', 'multi-part tutorials', 'learning path', 'guides'],
   alternates: {
-    canonical: 'https://runtimemind.vercel.app/series',
+    canonical: 'https://www.runtimemind.com/series',
   },
   openGraph: {
     title: 'Series - Multi-Part Tutorials & Guides | RuntimeMind',
     description: 'Explore curated series of multi-part tutorials and learning paths.',
-    url: 'https://runtimemind.vercel.app/series',
+    url: 'https://www.runtimemind.com/series',
     type: 'website',
     images: [{ url: '/api/og?title=Series&type=page', width: 1200, height: 630 }],
   },

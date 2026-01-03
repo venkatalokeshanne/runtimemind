@@ -72,13 +72,13 @@ export async function generateMetadata({ params }) {
   // Use SEO fields if available, fall back to default values
   const metaTitle = post.seo_title || post.title;
   const metaDescription = post.seo_description || post.excerpt || `Read "${post.title}" on Ink Blog.`;
-  const canonicalUrl = `https://runtimemind.vercel.app/articles/${slug}`;
+  const canonicalUrl = `https://www.runtimemind.com/articles/${slug}`;
   
   // Use cover image or generate placeholder from title
   // Append a numeric cache-busting `v` param (epoch ms) so crawlers refetch updated images
   const timestamp = post.updated_at ? Date.parse(post.updated_at) : post.published_at ? Date.parse(post.published_at) : Date.now();
   const cacheBuster = encodeURIComponent(timestamp);
-  const ogImage = post.cover_image_url || `https://runtimemind.vercel.app/api/og?title=${encodeURIComponent(post.title)}&type=article&author=${encodeURIComponent(post.author?.name || '')}&v=${cacheBuster}`;
+  const ogImage = post.cover_image_url || `https://www.runtimemind.com/api/og?title=${encodeURIComponent(post.title)}&type=article&author=${encodeURIComponent(post.author?.name || '')}&v=${cacheBuster}`;
   
   return {
     title: metaTitle,
@@ -151,25 +151,25 @@ function generateArticleJsonLd(post, slug) {
     '@type': 'Article',
     headline: post.seo_title || post.title,
     description: post.seo_description || post.excerpt,
-    image: post.cover_image_url || 'https://runtimemind.vercel.app/og-default.png',
+    image: post.cover_image_url || 'https://www.runtimemind.com/og-default.png',
     datePublished: post.published_at,
     dateModified: post.updated_at || post.published_at,
     author: {
       '@type': 'Person',
       name: post.author?.name || 'RuntimeMind',
-      url: post.author_id ? `https://runtimemind.vercel.app/author/${post.author_id}` : 'https://runtimemind.vercel.app',
+      url: post.author_id ? `https://www.runtimemind.com/author/${post.author_id}` : 'https://www.runtimemind.com',
     },
     publisher: {
       '@type': 'Organization',
       name: 'RuntimeMind',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://runtimemind.vercel.app/logo.png',
+        url: 'https://www.runtimemind.com/logo.png',
       },
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://runtimemind.vercel.app/articles/${slug}`,
+      '@id': `https://www.runtimemind.com/articles/${slug}`,
     },
     keywords: post.tags?.join(', ') || '',
     wordCount: post.content ? post.content.replace(/<[^>]*>/g, '').split(/\s+/).length : 0,
@@ -185,18 +185,18 @@ function generateArticleJsonLd(post, slug) {
  */
 function generateBreadcrumbJsonLd(post, slug) {
   const breadcrumbs = [
-    { name: 'Home', url: 'https://runtimemind.vercel.app' },
-    { name: 'Articles', url: 'https://runtimemind.vercel.app/articles' },
+    { name: 'Home', url: 'https://www.runtimemind.com' },
+    { name: 'Articles', url: 'https://www.runtimemind.com/articles' },
   ];
   
   if (post.topic) {
     breadcrumbs.push({ 
       name: post.topic, 
-      url: `https://runtimemind.vercel.app/articles/topic/${encodeURIComponent(post.topic.toLowerCase())}` 
+      url: `https://www.runtimemind.com/articles/topic/${encodeURIComponent(post.topic.toLowerCase())}` 
     });
   }
   
-  breadcrumbs.push({ name: post.title, url: `https://runtimemind.vercel.app/articles/${slug}` });
+  breadcrumbs.push({ name: post.title, url: `https://www.runtimemind.com/articles/${slug}` });
   
   return {
     '@context': 'https://schema.org',

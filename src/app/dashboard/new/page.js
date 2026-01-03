@@ -708,7 +708,7 @@ function PublishPanel({
             <p className="text-xs text-text-muted mb-2">Search Preview</p>
             <div className="space-y-1">
               <p className="text-sm font-medium text-blue-600 line-clamp-1">{seoTitle || title || 'Post Title'}</p>
-              <p className="text-xs text-green-700">runtimemind.vercel.app/articles/post-slug</p>
+              <p className="text-xs text-green-700">www.runtimemind.com/articles/post-slug</p>
               <p className="text-xs text-text-secondary line-clamp-2">{seoDescription || excerpt || 'Post description will appear here...'}</p>
             </div>
           </div>

@@ -31,13 +31,13 @@ export async function generateMetadata({ params }) {
     title: `${author.name} - Author Profile | RuntimeMind`,
     description: description,
     alternates: {
-      canonical: `https://runtimemind.vercel.app/author/${id}`,
+      canonical: `https://www.runtimemind.com/author/${id}`,
     },
     openGraph: {
       title: `${author.name} | RuntimeMind`,
       description: description,
       type: 'profile',
-      url: `https://runtimemind.vercel.app/author/${id}`,
+      url: `https://www.runtimemind.com/author/${id}`,
       images: author.avatar_url ? [{ url: author.avatar_url }] : undefined,
     },
     twitter: {

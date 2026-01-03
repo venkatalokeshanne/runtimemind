@@ -17,7 +17,7 @@ export const metadata = {
   openGraph: {
     title: 'About RuntimeMind - Free Article & Blog Writing Platform',
     description: 'RuntimeMind is a free platform where anyone can write and publish articles, stories, tutorials, and blog posts.',
-    url: 'https://runtimemind.vercel.app/about',
+    url: 'https://www.runtimemind.com/about',
     images: [{ url: '/api/og?title=About%20RuntimeMind&type=page', width: 1200, height: 630 }],
   },
   twitter: {
@@ -179,7 +179,7 @@ const RuntimeMind = {
             </div>
             <div className="flex items-center gap-4">
               <a 
-                href="mailto:hello@runtimemind.vercel.app" 
+                href="mailto:hello@www.runtimemind.com" 
                 className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-text-primary hover:bg-surface transition-colors"
               >
                 <Mail className="w-4 h-4" />

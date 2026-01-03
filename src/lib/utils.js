@@ -102,7 +102,7 @@ export function getPostDisplayDate(post) {
 /**
  * Gets the base URL for the application.
  * 
- * @returns {string} - Base URL (e.g., "https://runtimemind.vercel.app")
+ * @returns {string} - Base URL (e.g., "https://www.runtimemind.com")
  */
 export function getBaseUrl() {
   if (typeof window !== 'undefined') {

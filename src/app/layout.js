@@ -67,14 +67,14 @@ const geistMono = Geist_Mono({
  * - robots configuration for indexing
  */
 export const metadata = {
-  metadataBase: new URL('https://runtimemind.vercel.app'),
+  metadataBase: new URL('https://www.runtimemind.com'),
   title: {
     default: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
     template: '%s | RuntimeMind',
   },
   description: 'Write and publish articles, stories, tutorials, and blog posts. A free platform for writers, developers, and creators to share ideas with the world.',
   keywords: ['write articles online', 'publish blog posts', 'free blogging platform', 'write stories', 'share ideas', 'tech articles', 'programming tutorials', 'content writing', 'blogging site', 'article publishing', 'creative writing platform', 'developer blog'],
-  authors: [{ name: 'RuntimeMind', url: 'https://runtimemind.vercel.app' }],
+  authors: [{ name: 'RuntimeMind', url: 'https://www.runtimemind.com' }],
   creator: 'RuntimeMind',
   publisher: 'RuntimeMind',
   
@@ -87,9 +87,9 @@ export const metadata = {
   
   // Canonical and alternates
   alternates: {
-    canonical: 'https://runtimemind.vercel.app',
+    canonical: 'https://www.runtimemind.com',
     types: {
-      'application/rss+xml': 'https://runtimemind.vercel.app/rss',
+      'application/rss+xml': 'https://www.runtimemind.com/rss',
     },
   },
   
@@ -97,13 +97,13 @@ export const metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://runtimemind.vercel.app',
+    url: 'https://www.runtimemind.com',
     siteName: 'RuntimeMind',
     title: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
     description: 'Write and publish articles, stories, tutorials, and blog posts. A free platform for writers and creators to share ideas.',
     images: [
       {
-        url: '/api/og?title=RuntimeMind&type=website',
+        url: '/runtimemindhome.png',
         width: 1200,
         height: 630,
         alt: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
@@ -118,7 +118,7 @@ export const metadata = {
     creator: '@runtimemind',
     title: 'RuntimeMind - Write & Share Articles, Stories & Ideas',
     description: 'Write and publish articles, stories, tutorials, and blog posts. A free platform for writers and creators.',
-    images: ['/api/og?title=RuntimeMind&type=website'],
+    images: ['/runtimemindhome.png'],
   },
   
   // Robots
@@ -181,18 +181,18 @@ const jsonLd = {
   '@graph': [
     {
       '@type': 'WebSite',
-      '@id': 'https://runtimemind.vercel.app/#website',
-      url: 'https://runtimemind.vercel.app',
+      '@id': 'https://www.runtimemind.com/#website',
+      url: 'https://www.runtimemind.com',
       name: 'RuntimeMind',
       description: 'Tech articles, programming tutorials, and software development insights.',
       publisher: {
-        '@id': 'https://runtimemind.vercel.app/#organization',
+        '@id': 'https://www.runtimemind.com/#organization',
       },
       potentialAction: {
         '@type': 'SearchAction',
         target: {
           '@type': 'EntryPoint',
-          urlTemplate: 'https://runtimemind.vercel.app/articles?q={search_term_string}',
+          urlTemplate: 'https://www.runtimemind.com/articles?q={search_term_string}',
         },
         'query-input': 'required name=search_term_string',
       },
@@ -200,14 +200,14 @@ const jsonLd = {
     },
     {
       '@type': 'Organization',
-      '@id': 'https://runtimemind.vercel.app/#organization',
+      '@id': 'https://www.runtimemind.com/#organization',
       name: 'RuntimeMind',
-      url: 'https://runtimemind.vercel.app',
+      url: 'https://www.runtimemind.com',
       logo: {
         '@type': 'ImageObject',
-        '@id': 'https://runtimemind.vercel.app/#logo',
-        url: 'https://runtimemind.vercel.app/logo.png',
-        contentUrl: 'https://runtimemind.vercel.app/logo.png',
+        '@id': 'https://www.runtimemind.com/#logo',
+        url: 'https://www.runtimemind.com/logo.png',
+        contentUrl: 'https://www.runtimemind.com/logo.png',
         caption: 'RuntimeMind',
       },
       sameAs: [
