@@ -152,9 +152,13 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      session.user = token.user || session.user;
-      session.accessToken = token.access_token;
-      session.expires_at = token.expires_at;
+      // Always reflect the latest token state. If the token user was cleared (e.g. refresh failure),
+      // drop the session user too so the UI doesn't keep a stale authenticated state.
+      session.user = token.user ?? null;
+      session.accessToken = token.access_token ?? null;
+      session.refreshToken = token.refresh_token ?? null;
+      session.expires_at = token.expires_at ?? null;
+      session.error = token.error ?? null;
       return session;
     },
   },

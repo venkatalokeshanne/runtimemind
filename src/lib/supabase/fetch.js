@@ -20,6 +20,9 @@ export async function getAuthToken() {
     try {
       const { getSession } = await import('next-auth/react');
       const session = await getSession();
+      // If NextAuth flagged a refresh error, skip using the cached token so downstream
+      // calls can trigger a fresh auth flow instead of relying on stale credentials.
+      if (session?.error) return null;
       if (session?.accessToken) return session.accessToken;
       if (session?.accessToken === undefined && session?.user?.accessToken) return session.user.accessToken;
     } catch (e) {
