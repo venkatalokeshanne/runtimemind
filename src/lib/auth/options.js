@@ -58,6 +58,36 @@ export const authOptions = {
   secret: NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user }) {
+      // helper to refresh Supabase access token using refresh_token
+      async function refreshAccessToken(currentToken) {
+        try {
+          const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify({ refresh_token: currentToken.refresh_token }),
+          });
+
+          const refreshed = await res.json();
+
+          if (!res.ok || !refreshed?.access_token) {
+            throw new Error('Failed to refresh access token');
+          }
+
+          return {
+            ...currentToken,
+            access_token: refreshed.access_token,
+            refresh_token: refreshed.refresh_token || currentToken.refresh_token,
+            expires_at: refreshed.expires_at,
+          };
+        } catch (error) {
+          console.error('Error refreshing access token', error);
+          return { ...currentToken, error: 'RefreshAccessTokenError' };
+        }
+      }
+
       if (user) {
         let enriched = { ...user };
         try {
@@ -86,8 +116,28 @@ export const authOptions = {
 
         token.user = enriched;
         token.access_token = user.access_token;
+        token.refresh_token = user.refresh_token;
         token.expires_at = user.expires_at;
       }
+
+      // If token is expired (with a small leeway), attempt to refresh
+      try {
+        const expiresAt = token.expires_at;
+        const now = Math.floor(Date.now() / 1000);
+        if (expiresAt && now > expiresAt - 60) {
+          // token expired or about to expire, refresh
+          const refreshed = await refreshAccessToken(token);
+          if (refreshed.error) {
+            return refreshed; // contains error
+          }
+          token.access_token = refreshed.access_token;
+          token.refresh_token = refreshed.refresh_token;
+          token.expires_at = refreshed.expires_at;
+        }
+      } catch (e) {
+        console.warn('Token refresh check failed', e);
+      }
+
       return token;
     },
     async session({ session, token }) {
