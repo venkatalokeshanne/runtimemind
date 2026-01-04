@@ -87,8 +87,43 @@ export async function supabaseFetch(endpoint, options = {}) {
     headers,
   });
 
+  // If unauthorized or specific PostgREST JWT expired error, try refreshing session once
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: response.statusText }));
+
+    const isJwtExpired = (error && (error.message === 'JWT expired' || error.code === 'PGRST303'));
+    if (isJwtExpired && !options._retry) {
+      try {
+        // Force NextAuth server session refresh
+        await fetch('/api/auth/session', { method: 'GET', cache: 'no-store' });
+      } catch (e) {
+        // ignore
+      }
+
+      // Re-run to pick up refreshed token
+      const token = await getAuthToken();
+      const retryHeaders = {
+        apikey: SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      };
+
+      const retryResponse = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
+        ...options,
+        headers: retryHeaders,
+      });
+
+      if (!retryResponse.ok) {
+        const retryError = await retryResponse.json().catch(() => ({ message: retryResponse.statusText }));
+        return { data: null, error: retryError };
+      }
+
+      const retryText = await retryResponse.text();
+      const retryData = retryText ? JSON.parse(retryText) : null;
+      return { data: retryData, error: null };
+    }
+
     return { data: null, error };
   }
 

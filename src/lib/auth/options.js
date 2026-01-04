@@ -73,7 +73,9 @@ export const authOptions = {
           const refreshed = await res.json();
 
           if (!res.ok || !refreshed?.access_token) {
-            throw new Error('Failed to refresh access token');
+            // Log response for debugging (avoid leaking secrets) and return an error flag
+            console.warn('refreshAccessToken: refresh failed', { status: res.status, body: refreshed });
+            return { ...currentToken, error: 'RefreshAccessTokenError' };
           }
 
           return {
@@ -83,7 +85,7 @@ export const authOptions = {
             expires_at: refreshed.expires_at,
           };
         } catch (error) {
-          console.error('Error refreshing access token', error);
+          console.error('Error refreshing access token', error?.message || error);
           return { ...currentToken, error: 'RefreshAccessTokenError' };
         }
       }
@@ -128,7 +130,16 @@ export const authOptions = {
           // token expired or about to expire, refresh
           const refreshed = await refreshAccessToken(token);
           if (refreshed.error) {
-            return refreshed; // contains error
+            // Clear token so session becomes unauthenticated instead of leaving stale credentials
+            console.info('JWT refresh failed; clearing token to force re-authentication');
+            return {
+              ...token,
+              access_token: null,
+              refresh_token: null,
+              expires_at: null,
+              user: null,
+              error: 'RefreshAccessTokenError',
+            };
           }
           token.access_token = refreshed.access_token;
           token.refresh_token = refreshed.refresh_token;
