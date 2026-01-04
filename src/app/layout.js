@@ -33,6 +33,8 @@ import { SiteHeader, SiteFooter } from '@/modules/layout/components';
 import './globals.css';
 import WriteFloating from '@/components/WriteFloating';
 import { Analytics } from "@vercel/analytics/next"
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/options';
 
 /**
  * FONT CONFIGURATION
@@ -235,7 +237,9 @@ const jsonLd = {
   ],
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html 
       lang="en" 
@@ -258,7 +262,7 @@ export default function RootLayout({ children }) {
           min-h-screen flex flex-col
         `}
       >
-          <ClientProviders>
+          <ClientProviders session={session}>
             <Suspense fallback={<div className="h-16 bg-surface border-b border-border" />}>
               <SiteHeader siteName="RuntimeMind" />
             </Suspense>

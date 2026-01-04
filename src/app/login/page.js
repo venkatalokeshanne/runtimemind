@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -26,7 +26,8 @@ export default function LoginPage() {
   const { signIn } = useAuth();
   
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const passwordRef = useRef(null);
+  const emailRef = useRef(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -35,13 +36,58 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    // NextAuth credentials signIn
-    const result = await signIn('credentials', { redirect: false, email, password });
-
-    if (result?.error) {
-      setError(result.error);
+    // Read password from the uncontrolled input and immediately clear it from the DOM
+    const rawPassword = passwordRef.current?.value || '';
+    if (!rawPassword) {
+      setError('Please enter your password.');
       setLoading(false);
+      emailRef.current?.focus?.();
       return;
+    }
+
+    try {
+      // NextAuth credentials signIn (we send the password once, then clear it)
+      const result = await signIn('credentials', { redirect: false, email, password: rawPassword });
+
+      // Clear the password input value as soon as we've handed it off
+      try {
+        if (passwordRef.current) passwordRef.current.value = '';
+      } catch (e) {
+        // ignore
+      }
+
+      // Normalize and present friendly errors
+      if (!result) {
+        setError('No response from authentication server. Please try again.');
+        passwordRef.current?.focus?.();
+        return;
+      }
+
+      if (result.error) {
+        const raw = String(result.error || '').toLowerCase();
+        let friendly = 'Sign in failed. Please try again.';
+
+        if (raw.includes('invalid') || raw.includes('credentials')) {
+          friendly = 'Invalid email or password.';
+        } else if (raw.includes('request') || raw.includes('network')) {
+          friendly = 'Network error. Check your connection and try again.';
+        } else if (raw.includes('email')) {
+          friendly = 'Please check your email address.';
+        }
+
+        setError(friendly);
+        passwordRef.current?.focus?.();
+        return;
+      }
+
+      // Redirect to dashboard on success
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('Sign in error', err);
+      setError('An unexpected error occurred. Please try again later.');
+      passwordRef.current?.focus?.();
+    } finally {
+      setLoading(false);
     }
 
     // Redirect to dashboard on success
@@ -87,6 +133,7 @@ export default function LoginPage() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  ref={emailRef}
                   className="pl-10"
                   required
                   autoComplete="email"
@@ -111,8 +158,7 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  ref={passwordRef}
                   className="pl-10"
                   required
                   autoComplete="current-password"

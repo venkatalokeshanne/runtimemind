@@ -5,17 +5,18 @@
  * small `useAuth` hook that mirrors the old `useAuth` shape used across
  * the codebase. It also re-exports `signIn` and `signOut` helpers.
  */
-import { SessionProvider, useSession, signIn as nextSignIn, signOut as nextSignOut } from 'next-auth/react';
+import { SessionProvider, signIn as nextSignIn, signOut as nextSignOut } from 'next-auth/react';
+import { useUserContext } from './UserContext';
 
 export const AuthProvider = SessionProvider;
 
 export function useAuth() {
-	const { data: session, status } = useSession();
+	const { user, session, loading } = useUserContext();
 
 	return {
-		user: session?.user || null,
+		user: user || null,
 		session: session || null,
-		loading: status === 'loading',
+		loading: loading || false,
 		signIn: nextSignIn,
 		signOut: nextSignOut,
 	};

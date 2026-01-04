@@ -79,19 +79,6 @@ export default async function HomePage() {
       
       {/* Landing Page for logged-out users */}
       <div className="min-h-screen bg-background">
-        {/* Floating Write CTA */}
-        <div className="fixed bottom-8 right-8 z-40">
-          <Button 
-            size="lg" 
-            className="shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group rounded-full" 
-            asChild
-          >
-            <Link href="/dashboard/new">
-              <PenTool className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
-              <span className="hidden md:inline">Write</span>
-            </Link>
-          </Button>
-        </div>
 
         {/* Hero Section - Preserved */}
         <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-accent/10 via-transparent to-transparent">
