@@ -12,6 +12,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { getInitials } from '@/lib/utils';
 import Link from 'next/link';
 import { MessageSquare, Send, User, Trash2, Reply, ChevronDown, ChevronUp, LogIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -49,6 +50,10 @@ function Comment({ comment, onDelete, onReply, currentUserId, isReply = false })
   const isOwner = currentUserId && currentUserId === comment.author_id;
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const displayName = comment.author?.name || comment.author?.email || 'Anonymous';
+  const displayLabel = comment.author?.name || (comment.author?.email ? comment.author.email.split('@')[0] : 'Anonymous');
+  const initial = getInitials(displayName, 2);
+
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this comment?')) return;
     setIsDeleting(true);
@@ -67,12 +72,12 @@ function Comment({ comment, onDelete, onReply, currentUserId, isReply = false })
         {comment.author?.avatar_url ? (
           <img
             src={comment.author.avatar_url}
-            alt={comment.author.name}
+            alt={displayLabel}
             className="w-8 h-8 rounded-full object-cover"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
-            <User className="w-4 h-4 text-accent" />
+          <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-sm font-medium text-accent">
+            {initial}
           </div>
         )}
       </div>
@@ -83,7 +88,7 @@ function Comment({ comment, onDelete, onReply, currentUserId, isReply = false })
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2">
               <span className="font-medium text-text-primary text-sm">
-                {comment.author?.name || 'Anonymous'}
+                {displayLabel}
               </span>
               <span className="text-xs text-text-muted">
                 {formatRelativeTime(comment.created_at)}

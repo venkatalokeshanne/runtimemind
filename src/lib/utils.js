@@ -248,3 +248,30 @@ export function safeJsonParse(json, fallback = null) {
     return fallback;
   }
 }
+
+/**
+ * Get display initials from a name or email.
+ * - If value contains a space, returns first letters of first two words (e.g. "Anne V" -> "AV").
+ * - If single word or username, returns first two characters (e.g. "Anne" -> "AN").
+ * - If an email is provided, uses the part before the @.
+ * @param {string} value
+ * @param {number} length
+ * @returns {string}
+ */
+export function getInitials(value, length = 2) {
+  if (!value) return 'U'.repeat(Math.max(1, length)).slice(0, length);
+
+  let v = String(value).trim();
+  // If email, use local part
+  if (v.includes('@')) {
+    v = v.split('@')[0];
+  }
+
+  const parts = v.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, length);
+  }
+
+  // Single word: take first `length` characters
+  return v.slice(0, length).toUpperCase();
+}

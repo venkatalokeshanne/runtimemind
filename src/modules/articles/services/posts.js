@@ -598,6 +598,22 @@ export async function getRelatedPosts(postId, seriesId, currentSlug, limit = 4) 
     return { data: [], error };
   }
 
+  // If we found nothing in the series (common when the post is the only one),
+  // fall back to recent published posts so the Related Posts section is never empty.
+  if ((!data || data.length === 0) && seriesId) {
+    try {
+      const { data: fallback, error: fallbackError } = await supabaseFetch(
+        `posts?select=id,slug,title,excerpt,cover_image_url,published_at,series_id&published=eq.true&slug=neq.${currentSlug}&order=published_at.desc&limit=${limit}`
+      );
+
+      if (!fallbackError && fallback && fallback.length > 0) {
+        return { data: fallback, error: null };
+      }
+    } catch (e) {
+      // ignore and continue to return empty
+    }
+  }
+
   return { data: data || [], error: null };
 }
 

@@ -174,26 +174,32 @@ export function PostContent({ post, fromSeries = false }) {
         initialCount={post.comments_count || 0} 
       />
 
-      {/* Author Bio (optional footer) */}
-      {post.author?.bio && (
+      {/* Author Bio/Footer - show author block whenever author exists, bio optional */}
+      {post.author && (
         <footer className="mt-12 pt-8 border-t border-border">
           <div className="flex items-start gap-4">
             <Link href={`/author/${post.author_id}`}>
-              {post.author.avatar_url && (
+              {post.author.avatar_url ? (
                 <img
                   src={post.author.avatar_url}
                   alt={post.author.name}
                   className="w-12 h-12 rounded-full object-cover hover:opacity-80 transition-opacity"
                 />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-lg font-bold text-white shadow-sm">
+                  {(post.author?.name || post.author?.email || 'U').slice(0,1).toUpperCase()}
+                </div>
               )}
             </Link>
             <div className="flex-1">
               <Link href={`/author/${post.author_id}`} className="font-semibold text-text-primary hover:text-accent transition-colors">
                 {post.author.name}
               </Link>
-              <p className="text-text-secondary mt-1">
-                {post.author.bio}
-              </p>
+              {post.author.bio ? (
+                <p className="text-text-secondary mt-1">
+                  {post.author.bio}
+                </p>
+              ) : null}
               {/* Social Links */}
               {(post.author.website || post.author.twitter || post.author.linkedin) && (
                 <div className="flex items-center gap-3 mt-3">

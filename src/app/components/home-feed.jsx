@@ -6,7 +6,8 @@
  * ============================================================================
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { getInitials } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth';
@@ -51,6 +52,38 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
     }
   };
 
+  // More menu state
+  const menuRef = useRef(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const toggleMenu = (e) => {
+    e.preventDefault();
+    setMenuOpen(v => !v);
+  };
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, [menuOpen]);
+
+  const handleCopyLink = async (e) => {
+    e.preventDefault();
+    try {
+      await navigator.clipboard.writeText(window.location.origin + `/articles/${post.slug}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+      setMenuOpen(false);
+    } catch (err) {
+      console.error('copy failed', err);
+    }
+  };
+
   return (
     <article className={`group py-6 ${featured ? '' : 'border-b border-border'}`}>
       <div className="flex gap-6">
@@ -58,7 +91,7 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
         <div className="flex-1 min-w-0">
           {/* Author row */}
           <div className="flex items-center gap-2 mb-3">
-            {post.author?.avatar_url ? (
+                {post.author?.avatar_url ? (
               <Image
                 src={post.author.avatar_url}
                 alt={post.author.name}
@@ -67,11 +100,9 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
                 className="rounded-full"
               />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center">
-                <span className="text-xs font-medium text-accent">
-                  {post.author?.name?.[0] || 'A'}
-                </span>
-              </div>
+                  <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-xs font-medium text-white">
+                    {getInitials(post.author?.name || post.author?.email, 2)}
+                  </div>
             )}
             <Link 
               href={`/author/${post.author?.id}`}
@@ -126,7 +157,7 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
                 {post.read_time_minutes || 5} min read
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 relative">
               <button 
                 onClick={handleBookmark}
                 disabled={saving}
@@ -134,15 +165,26 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
               >
                 <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
               </button>
-              <button className="p-1.5 rounded-full text-text-muted hover:text-text-secondary transition-colors">
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
+
+              <div ref={menuRef} className="relative">
+                <button onClick={toggleMenu} className="p-1.5 rounded-full text-text-muted hover:text-text-secondary transition-colors">
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+
+                {menuOpen && (
+                  <div className="absolute right-0 mt-2 w-40 bg-surface border border-border rounded-md shadow-lg z-20 text-sm">
+                    <button onClick={handleCopyLink} className="w-full text-left px-3 py-2 hover:bg-surface-inset transition-colors">{copied ? 'Copied!' : 'Copy link'}</button>
+                    <button onClick={(e) => { e.preventDefault(); setMenuOpen(false); if (navigator.share) { navigator.share({ title: post.title, url: window.location.origin + `/articles/${post.slug}` }); } }} className="w-full text-left px-3 py-2 hover:bg-surface-inset transition-colors">Share</button>
+                    <button onClick={(e) => { e.preventDefault(); setMenuOpen(false); console.log('report', post.id); }} className="w-full text-left px-3 py-2 hover:bg-surface-inset transition-colors">Report</button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Thumbnail (post cover preferred, series cover fallback) */}
-        {(post.cover_image_url || post.series?.cover_image_url) && (
+        {(!userId && (post.cover_image_url || post.series?.cover_image_url)) && (
           <Link href={`/articles/${post.slug}`} className="flex-shrink-0">
             <div className={`relative overflow-hidden rounded-lg ${featured ? 'w-40 h-40 md:w-52 md:h-40' : 'w-28 h-28 md:w-36 md:h-28'}`}>
               <Image
@@ -258,7 +300,7 @@ function Sidebar({ tags, series, userId, suggestedUsers, followStatuses, onToggl
         <div>
           <h3 className="font-bold text-text-primary mb-4">Who to follow</h3>
           <div className="space-y-4">
-            {suggestedUsers.map((writer) => (
+                  {suggestedUsers.map((writer) => (
               <div key={writer.id} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {writer.avatar_url ? (
@@ -270,8 +312,8 @@ function Sidebar({ tags, series, userId, suggestedUsers, followStatuses, onToggl
                       className="rounded-full"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-                      <Feather className="w-4 h-4 text-accent" />
+                    <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-white">
+                      {getInitials(writer.name || writer.email || 'W', 2)}
                     </div>
                   )}
                   <div>

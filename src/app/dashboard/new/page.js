@@ -347,6 +347,7 @@ function PublishPanel({
   setTopic,
   topicDropdownOpen,
   setTopicDropdownOpen,
+  setSelectedSeriesId,
   // SEO fields
   seoTitle,
   setSeoTitle,
@@ -1258,6 +1259,7 @@ export default function NewPostPage() {
             seriesList={seriesList}
             selectedSeries={selectedSeries}
             setSelectedSeries={setSelectedSeries}
+            setSelectedSeriesId={setSelectedSeriesId}
             seriesOrder={seriesOrder}
             setSeriesOrder={setSeriesOrder}
             seriesDropdownOpen={seriesDropdownOpen}

@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from '@/lib/theme';
 import { useAuth } from '@/lib/auth';
+import { getInitials } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -335,7 +336,7 @@ export function SiteHeader({ siteName = 'Runtimemind' }) {
                               />
                             ) : (
                               <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-lg font-bold text-white shadow-sm">
-                                {(user?.name || user?.email?.split('@')[0] || 'U').slice(0,1).toUpperCase()}
+                                {getInitials(user?.name || user?.email || 'U', 2)}
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
@@ -489,7 +490,7 @@ function AccountDropdown({ user, signOut }) {
           />
         ) : (
           <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-white">
-            {(user?.name || 'U').slice(0,1)}
+            {getInitials(user?.name || user?.email || 'U', 2)}
           </div>
         )}
       </motion.button>
@@ -514,7 +515,7 @@ function AccountDropdown({ user, signOut }) {
                   />
                 ) : (
                   <div className="w-11 h-11 rounded-full bg-accent flex items-center justify-center text-base font-bold text-white">
-                    {(user?.name || user?.email?.split('@')[0] || 'U').slice(0,1).toUpperCase()}
+                  {getInitials(user?.name || user?.email || 'U', 2)}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">

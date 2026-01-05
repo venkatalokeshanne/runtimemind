@@ -324,17 +324,37 @@ CREATE TRIGGER posts_updated_at
 --
 
 CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $handle_new_user$
+DECLARE
+  display_name TEXT;
+  first_last TEXT;
+  given_family TEXT;
+  nested_name TEXT;
+  nested_full TEXT;
 BEGIN
+  first_last := trim(concat_ws(' ', NEW.raw_user_meta_data->>'first_name', NEW.raw_user_meta_data->>'last_name'));
+  given_family := trim(concat_ws(' ', NEW.raw_user_meta_data->>'given_name', NEW.raw_user_meta_data->>'family_name'));
+  nested_name := NULLIF(NEW.raw_user_meta_data->'user'->>'name', '');
+  nested_full := NULLIF(NEW.raw_user_meta_data->'user'->>'full_name', '');
+  display_name := COALESCE(
+    NULLIF(trim(NEW.raw_user_meta_data->>'name'), ''),
+    NULLIF(trim(NEW.raw_user_meta_data->>'full_name'), ''),
+    NULLIF(nested_name, ''),
+    NULLIF(nested_full, ''),
+    NULLIF(first_last, ''),
+    NULLIF(given_family, ''),
+    split_part(NEW.email, '@', 1)
+  );
+
   INSERT INTO public.profiles (id, name, avatar_url)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'name', NEW.email),
+    display_name,
     NEW.raw_user_meta_data->>'avatar_url'
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$handle_new_user$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Listen for new users in auth.users
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
