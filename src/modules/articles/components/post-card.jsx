@@ -64,28 +64,32 @@ export function PostCard({ post, compact = false, large = false }) {
         href={`/articles/${post.slug}`}
         className="block"
       >
-        {/* Cover Image */}
+        {/* Cover Image (prefer post cover, fall back to series cover if present) */}
         {!compact && (
           <div className="relative aspect-[16/9] mb-4 overflow-hidden rounded-[var(--radius-md)] bg-surface">
-            {post.cover_image_url ? (
-              <Image
-                src={post.cover_image_url}
-                alt={`Cover image for ${post.title}`}
-                fill
-                className="object-cover transition-opacity duration-300 group-hover:opacity-90"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-            ) : (
-              <ImagePlaceholder title={post.title} type="article" />
-            )}
+            {(() => {
+              const imageUrl = post.cover_image_url || post.series?.cover_image_url || null;
+              if (imageUrl) {
+                return (
+                  <Image
+                    src={imageUrl}
+                    alt={`Cover image for ${post.title}`}
+                    fill
+                    className="object-contain transition-opacity duration-300 group-hover:opacity-90"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                );
+              }
+              return <ImagePlaceholder title={post.title} type="article" />;
+            })()}
           </div>
         )}
 
         {/* Compact variant: small thumbnail left */}
-        {post.cover_image_url && compact && (
+        {((post.cover_image_url || post.series?.cover_image_url) && compact) && (
           <div className="flex items-start gap-3 mb-3">
             <div className="relative w-20 h-12 rounded-md overflow-hidden bg-surface flex-shrink-0">
-              <Image src={post.cover_image_url} alt={post.title} fill className="object-cover" />
+              <Image src={post.cover_image_url || post.series?.cover_image_url} alt={post.title} fill className="object-contain" />
             </div>
             <div className="flex-1">
               <h2 className="font-semibold text-text-primary line-clamp-2">{post.title}</h2>

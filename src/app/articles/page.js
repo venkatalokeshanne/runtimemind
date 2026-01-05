@@ -108,7 +108,7 @@ export default async function BlogPage() {
                             src={featuredPost.cover_image_url}
                             alt={featuredPost.title}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-700"
+                            className="object-contain group-hover:scale-105 transition-transform duration-700"
                             priority
                           />
                         ) : (
@@ -178,7 +178,7 @@ export default async function BlogPage() {
                               src={post.cover_image_url}
                               alt={post.title}
                               fill
-                              className="object-cover group-hover:scale-105 transition-transform duration-500"
+                              className="object-contain group-hover:scale-105 transition-transform duration-500"
                             />
                           ) : (
                             <ImagePlaceholder type="article" hideInitial />

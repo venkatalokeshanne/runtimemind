@@ -139,11 +139,11 @@ export default async function HomePage() {
                   className="group relative rounded-2xl overflow-hidden bg-surface border border-border hover:border-accent/50 transition-all duration-300 min-h-[300px]"
                 >
                   {featuredPost.cover_image_url ? (
-                    <Image
+                      <Image
                       src={featuredPost.cover_image_url}
                       alt={featuredPost.title}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="object-contain group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-accent/5" />
@@ -205,7 +205,7 @@ export default async function HomePage() {
                         src={post.cover_image_url}
                         alt={post.title}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="object-contain group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-br from-surface-elevated to-surface" />
@@ -244,7 +244,7 @@ export default async function HomePage() {
                         src={post.cover_image_url}
                         alt={post.title}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="object-contain group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-br from-surface-elevated to-surface" />
@@ -349,7 +349,7 @@ export default async function HomePage() {
                           src={s.cover_image_url}
                           alt={s.title}
                           fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="object-contain group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">

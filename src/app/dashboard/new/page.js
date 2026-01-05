@@ -465,6 +465,7 @@ function PublishPanel({
                       <button
                         onClick={() => {
                           setSelectedSeries(null);
+                          setSelectedSeriesId(null);
                           setSeriesDropdownOpen(false);
                         }}
                         className={`w-full text-left px-4 py-2.5 text-sm hover:bg-hover transition-colors ${!selectedSeries ? 'bg-hover' : ''}`}
@@ -475,7 +476,8 @@ function PublishPanel({
                         <button
                           key={series.id}
                           onClick={() => {
-                            setSelectedSeries(series);
+                              setSelectedSeries(series);
+                              setSelectedSeriesId(series.id);
                             setSeriesDropdownOpen(false);
                           }}
                           className={`w-full text-left px-4 py-2.5 text-sm hover:bg-hover transition-colors flex items-center justify-between ${selectedSeries?.id === series.id ? 'bg-hover' : ''}`}
@@ -793,6 +795,7 @@ export default function NewPostPage() {
   // Series state
   const [seriesList, setSeriesList] = useState([]);
   const [selectedSeries, setSelectedSeries] = useState(null);
+  const [selectedSeriesId, setSelectedSeriesId] = useState(null);
   const [seriesOrder, setSeriesOrder] = useState(1);
   const [seriesDropdownOpen, setSeriesDropdownOpen] = useState(false);
 
@@ -833,8 +836,78 @@ export default function NewPostPage() {
     const { data } = await getSeriesForSelect(user.id);
     if (data) {
       setSeriesList(data);
+      // If a draft referenced a series id, resolve it to the full object
+      if (selectedSeriesId) {
+        const found = data.find((s) => s.id === selectedSeriesId);
+        if (found) setSelectedSeries(found);
+      }
     }
   }
+
+  // Draft persistence key (per-user)
+  const draftKey = user ? `runtimemind:draft:${user.id}` : 'runtimemind:draft:anon';
+
+  // Load draft from localStorage when user is available
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (!draft) return;
+      if (draft.title) setTitle(draft.title);
+      if (draft.excerpt) setExcerpt(draft.excerpt);
+      if (draft.content) setContent(draft.content);
+      if (draft.tags) setTags(draft.tags);
+      if (draft.topic) setTopic(draft.topic);
+      if (draft.seoTitle) setSeoTitle(draft.seoTitle);
+      if (draft.seoDescription) setSeoDescription(draft.seoDescription);
+      if (typeof draft.featured === 'boolean') setFeatured(draft.featured);
+      if (draft.customReadTime) setCustomReadTime(draft.customReadTime);
+      if (draft.seriesOrder) setSeriesOrder(draft.seriesOrder);
+      if (draft.selectedSeriesId) setSelectedSeriesId(draft.selectedSeriesId);
+      if (draft.coverPreview) {
+        // restore as a preview (may be a data URL)
+        setCoverPreview(draft.coverPreview);
+      }
+    } catch (err) {
+      console.warn('Failed to load draft:', err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // Auto-save draft to localStorage (debounced)
+  useEffect(() => {
+    if (!user) return;
+    const payload = {
+      title,
+      excerpt,
+      content,
+      tags,
+      topic,
+      seoTitle,
+      seoDescription,
+      featured,
+      customReadTime,
+      seriesOrder,
+      selectedSeriesId: selectedSeries?.id || selectedSeriesId || null,
+      coverPreview: coverPreview || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify(payload));
+        setAutoSaved(true);
+        setTimeout(() => setAutoSaved(false), 1000);
+      } catch (err) {
+        console.warn('Failed to save draft:', err);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, excerpt, content, tags, topic, seoTitle, seoDescription, featured, customReadTime, seriesOrder, selectedSeriesId, coverPreview, user]);
 
   // AI Generation function
   async function handleAiGenerate(type) {
@@ -891,12 +964,8 @@ export default function NewPostPage() {
     }
   }
 
-  // Cleanup cover preview URL
-  useEffect(() => {
-    return () => {
-      if (coverPreview) URL.revokeObjectURL(coverPreview);
-    };
-  }, [coverPreview]);
+  // no-op cleanup for data URLs (we persist previews as data URLs now)
+  useEffect(() => {}, [coverPreview]);
 
   // Auto-save indicator
   useEffect(() => {
@@ -913,16 +982,22 @@ export default function NewPostPage() {
   // Handlers
   const handleCoverUpload = (file) => {
     if (file instanceof File) {
-      if (coverPreview) URL.revokeObjectURL(coverPreview);
-      setCoverFile(file);
-      setCoverPreview(URL.createObjectURL(file));
+      // Read file as data URL so it can be persisted in localStorage across navigation
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result;
+        if (dataUrl && typeof dataUrl === 'string') {
+          setCoverFile(file);
+          setCoverPreview(dataUrl);
+        }
+      };
+      reader.readAsDataURL(file);
     } else {
       fileInputRef.current?.click();
     }
   };
 
   const handleCoverRemove = () => {
-    if (coverPreview) URL.revokeObjectURL(coverPreview);
     setCoverFile(null);
     setCoverPreview(null);
   };
@@ -1017,10 +1092,22 @@ export default function NewPostPage() {
         }
       }
 
-      // Upload cover if exists
+      // Upload cover if exists. Support File or persisted data URL preview.
       let coverUrl = null;
-      if (coverFile) {
-        const { url, error: uploadError } = await uploadCoverImage(coverFile, user.id);
+      let fileToUpload = coverFile;
+      if (!fileToUpload && coverPreview && typeof coverPreview === 'string' && coverPreview.startsWith('data:')) {
+        try {
+          const res = await fetch(coverPreview);
+          const blob = await res.blob();
+          const ext = (blob.type && blob.type.split('/')[1]) || 'png';
+          fileToUpload = new File([blob], `cover.${ext}`, { type: blob.type });
+        } catch (convErr) {
+          console.warn('Failed to convert data URL to file for upload:', convErr);
+        }
+      }
+
+      if (fileToUpload) {
+        const { url, error: uploadError } = await uploadCoverImage(fileToUpload, user.id);
         if (uploadError) {
           setError('Failed to upload cover image');
           setSaving(false);
@@ -1051,6 +1138,14 @@ export default function NewPostPage() {
         setError(saveError.message);
         setSaving(false);
         return;
+      }
+
+
+      // Clear persisted draft on successful save
+      try {
+        localStorage.removeItem(draftKey);
+      } catch (err) {
+        // ignore
       }
 
       router.push('/dashboard/posts');

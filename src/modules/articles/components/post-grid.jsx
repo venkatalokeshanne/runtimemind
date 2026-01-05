@@ -62,24 +62,30 @@ function PostGridItem({ post }) {
         {/* Image - clickable to article */}
         <Link href={`/articles/${post.slug}`} className="block">
           <div className="relative aspect-[16/10] mb-4 rounded-xl overflow-hidden bg-surface border border-border group-hover:border-accent/30 transition-colors">
-            {post.cover_image_url ? (
-              <Image
-                src={post.cover_image_url}
-                alt={post.title}
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-            ) : (
-              <>
-                <span className="block md:hidden w-full h-full">
-                  <ImagePlaceholder type="article" />
-                </span>
-                <span className="hidden md:block w-full h-full">
-                  <ImagePlaceholder title={post.title} type="article" showFullTitle />
-                </span>
-              </>
-            )}
+            {(() => {
+              const imageUrl = post.cover_image_url || post.series?.cover_image_url || null;
+              if (imageUrl) {
+                return (
+                  <Image
+                    src={imageUrl}
+                    alt={post.title}
+                    fill
+                    className="object-contain transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                );
+              }
+              return (
+                <>
+                  <span className="block md:hidden w-full h-full">
+                    <ImagePlaceholder type="article" />
+                  </span>
+                  <span className="hidden md:block w-full h-full">
+                    <ImagePlaceholder title={post.title} type="article" showFullTitle />
+                  </span>
+                </>
+              );
+            })()}
           </div>
         </Link>
 

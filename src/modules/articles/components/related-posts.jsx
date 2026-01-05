@@ -64,7 +64,7 @@ export function RelatedPosts({ postId, seriesId, currentSlug }) {
                     src={post.cover_image_url}
                     alt=""
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="object-contain group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
                   <ImagePlaceholder title={post.title} type="article" />

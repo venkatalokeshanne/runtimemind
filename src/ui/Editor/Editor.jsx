@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useEditor, EditorContent as TiptapEditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -107,9 +107,9 @@ function EditorToolbar({ editor }) {
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   }, [editor]);
 
-  return (
-    <div className="flex flex-wrap items-center gap-1 p-3 bg-background border border-border-strong rounded-xl mb-4 sticky top-0 z-10 shadow-sm">
-      {/* Text Style */}
+  // Extracted toolbar controls so we can reuse the same UI for the fixed clone
+  const ToolbarControls = () => (
+    <>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
@@ -160,7 +160,6 @@ function EditorToolbar({ editor }) {
 
       <ToolbarDivider />
 
-      {/* Headings */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         isActive={editor.isActive('heading', { level: 1 })}
@@ -195,7 +194,6 @@ function EditorToolbar({ editor }) {
 
       <ToolbarDivider />
 
-      {/* Lists */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive('bulletList')}
@@ -214,7 +212,6 @@ function EditorToolbar({ editor }) {
 
       <ToolbarDivider />
 
-      {/* Blocks */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         isActive={editor.isActive('blockquote')}
@@ -240,7 +237,6 @@ function EditorToolbar({ editor }) {
 
       <ToolbarDivider />
 
-      {/* Alignment */}
       <ToolbarButton
         onClick={() => editor.chain().focus().setTextAlign('left').run()}
         isActive={editor.isActive({ textAlign: 'left' })}
@@ -267,7 +263,6 @@ function EditorToolbar({ editor }) {
 
       <ToolbarDivider />
 
-      {/* Media & Links */}
       <ToolbarButton
         onClick={setLink}
         isActive={editor.isActive('link')}
@@ -285,7 +280,6 @@ function EditorToolbar({ editor }) {
 
       <ToolbarDivider />
 
-      {/* History */}
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
@@ -301,7 +295,71 @@ function EditorToolbar({ editor }) {
       >
         <Redo className="w-4 h-4" />
       </ToolbarButton>
-    </div>
+    </>
+  );
+
+  // Use IntersectionObserver to toggle a fixed clone when toolbar scrolls past the TopBar.
+  const containerRef = useRef(null);
+  const [isStuck, setIsStuck] = useState(false);
+  const [containerRect, setContainerRect] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const updateRect = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setContainerRect({ left: rect.left + window.scrollX, width: rect.width });
+    };
+
+    updateRect();
+    window.addEventListener('resize', updateRect);
+    return () => window.removeEventListener('resize', updateRect);
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const topBar = document.querySelector('header.sticky');
+    const headerHeight = topBar ? Math.round(topBar.getBoundingClientRect().height) : 64;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // if toolbar top is above header bottom => not intersecting the area under header => should stick
+          setIsStuck(!entry.isIntersecting);
+        });
+      },
+      {
+        root: null,
+        rootMargin: `-${headerHeight + 8}px 0px 0px 0px`,
+        threshold: 0,
+      }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <>
+      <div
+        ref={containerRef}
+        className={`flex flex-wrap items-center gap-1 p-3 bg-background border border-border-strong rounded-xl mb-4 w-full max-w-[980px] mx-auto shadow-sm transition-transform transition-opacity duration-150 ease-in-out ${isStuck ? 'opacity-0 -translate-y-1 pointer-events-none' : 'opacity-100 translate-y-0'}`}
+      >
+        <ToolbarControls />
+      </div>
+
+      <div
+        aria-hidden={!isStuck}
+        className="fixed z-50 left-0"
+        style={{ top: document.querySelector('header.sticky')?.getBoundingClientRect().bottom || 64, left: containerRect.left, width: containerRect.width }}
+      >
+        <div className={`flex flex-wrap items-center gap-1 p-3 bg-background border border-border-strong rounded-xl mb-4 shadow-sm transition-transform transition-opacity duration-150 ease-in-out ${isStuck ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'}`}>
+          <ToolbarControls />
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -386,6 +444,89 @@ export function Editor({ data, onChange, showToolbar = true, minHeight = '400px'
     },
   });
 
+  // Keep editor content in sync when `data` prop changes externally
+  useEffect(() => {
+    if (!editor) return;
+    const html = getInitialContent();
+    const current = editor.getHTML();
+    if (html !== current) {
+      editor.commands.setContent(html, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, editor]);
+
+  // Floating selection toolbar component
+  function FloatingSelectionToolbar({ editor }) {
+    const [visible, setVisible] = useState(false);
+    const [style, setStyle] = useState({ top: 0, left: 0 });
+
+    useEffect(() => {
+      if (!editor) return;
+
+      const update = () => {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) {
+          setVisible(false);
+          return;
+        }
+        const range = sel.getRangeAt(0);
+        const text = sel.toString();
+        if (!text || text.trim() === '') {
+          setVisible(false);
+          return;
+        }
+        const rect = range.getBoundingClientRect();
+        if (!rect) {
+          setVisible(false);
+          return;
+        }
+        const top = rect.top + window.scrollY - 44;
+        const left = rect.left + window.scrollX + rect.width / 2;
+        setStyle({ top, left });
+        setVisible(true);
+      };
+
+      document.addEventListener('selectionchange', update);
+      return () => document.removeEventListener('selectionchange', update);
+    }, [editor]);
+
+    if (!visible) return null;
+
+    return (
+      <div style={{ position: 'fixed', top: style.top, left: style.left, transform: 'translateX(-50%)', zIndex: 60 }}>
+        <div className="rounded-lg bg-surface border border-border p-2 flex items-center gap-1 shadow-sm">
+          <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} tooltip="Bold">
+            <Bold className="w-4 h-4" />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} tooltip="Italic">
+            <Italic className="w-4 h-4" />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} tooltip="Underline">
+            <UnderlineIcon className="w-4 h-4" />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleCode().run()} isActive={editor.isActive('code')} tooltip="Code">
+            <Code className="w-4 h-4" />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} tooltip="Quote">
+            <Quote className="w-4 h-4" />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => {
+            const previousUrl = editor.getAttributes('link').href;
+            const url = window.prompt('Enter URL:', previousUrl);
+            if (url === null) return;
+            if (url === '') {
+              editor.chain().focus().extendMarkRange('link').unsetLink().run();
+              return;
+            }
+            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+          }} tooltip="Link">
+            <LinkIcon className="w-4 h-4" />
+          </ToolbarButton>
+        </div>
+      </div>
+    );
+  }
+
   // Handle image drop
   useEffect(() => {
     if (!editor) return;
@@ -454,7 +595,13 @@ export function Editor({ data, onChange, showToolbar = true, minHeight = '400px'
       ) : (
         /* Edit Mode */
         <>
+          {/* Floating selection toolbar: appears near selected text */}
+          {editor && (
+            <FloatingSelectionToolbar editor={editor} />
+          )}
           {showToolbar && <EditorToolbar editor={editor} />}
+          {/* spacer for fixed mobile toolbar so content and buttons aren't covered */}
+          {showToolbar && <div className="md:hidden h-16" />}
           
           <div 
             className="editor-content bg-white dark:bg-surface-elevated border border-border-strong rounded-xl p-6 transition-all focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 shadow-sm"

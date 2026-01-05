@@ -141,15 +141,15 @@ function PostCard({ post, featured = false, userId, isBookmarked, onToggleBookma
           </div>
         </div>
 
-        {/* Thumbnail */}
-        {post.cover_image_url && (
+        {/* Thumbnail (post cover preferred, series cover fallback) */}
+        {(post.cover_image_url || post.series?.cover_image_url) && (
           <Link href={`/articles/${post.slug}`} className="flex-shrink-0">
             <div className={`relative overflow-hidden rounded-lg ${featured ? 'w-40 h-40 md:w-52 md:h-40' : 'w-28 h-28 md:w-36 md:h-28'}`}>
               <Image
-                src={post.cover_image_url}
+                src={post.cover_image_url || post.series?.cover_image_url}
                 alt={post.title}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                className="object-contain group-hover:scale-105 transition-transform duration-300"
               />
             </div>
           </Link>

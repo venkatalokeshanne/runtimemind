@@ -67,12 +67,12 @@ function CardItem({ series, index }) {
         >
           <div className="relative w-full aspect-[16/9] mb-4 rounded-md overflow-hidden bg-surface-inset">
             {series.cover_image_url ? (
-              <Image
-                src={series.cover_image_url}
-                alt={series.title}
-                fill
-                className="object-cover"
-              />
+                <Image
+                  src={series.cover_image_url}
+                  alt={series.title}
+                  fill
+                  className="object-contain"
+                />
             ) : (
               <ImagePlaceholder title={series.title} type="series" />
             )}
@@ -212,12 +212,12 @@ function ListItem({ series, index }) {
         >
           <div className="relative w-16 h-16 rounded-md overflow-hidden bg-surface-inset flex-shrink-0">
             {series.cover_image_url ? (
-              <Image
-                src={series.cover_image_url}
-                alt={series.title}
-                fill
-                className="object-cover"
-              />
+                <Image
+                  src={series.cover_image_url}
+                  alt={series.title}
+                  fill
+                  className="object-contain"
+                />
             ) : (
               <ImagePlaceholder title={series.title} type="series" />
             )}

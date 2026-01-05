@@ -229,7 +229,7 @@ export async function getSeriesForSelect(authorId) {
  */
 export async function createSeries({ title, description, cover_image_url, published = false }) {
   const slug = slugify(title);
-  const token = getAuthToken();
+  const token = await getAuthToken();
 
   if (!token) {
     return { data: null, error: { message: 'Not authenticated' } };
@@ -252,17 +252,29 @@ export async function createSeries({ title, description, cover_image_url, publis
     return { data: newSeries, error: null };
   }
 
-  // Note: author_id will be set by RLS policy or trigger based on auth.uid()
+  // Attempt to extract user id from JWT and include as author_id so RLS WITH CHECK passes
+  let author_id = null;
+  try {
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(decodeURIComponent(escape(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))));
+    author_id = decoded?.sub || decoded?.user_id || null;
+  } catch (e) {
+    // ignore - we'll still try the insert and let Supabase enforce RLS
+  }
+
+  const body = {
+    slug,
+    title,
+    description,
+    cover_image_url,
+    published,
+    ...(author_id ? { author_id } : {}),
+  };
+
   const { data, error } = await supabaseFetch('series?select=*', {
     method: 'POST',
     headers: { 'Prefer': 'return=representation' },
-    body: JSON.stringify({
-      slug,
-      title,
-      description,
-      cover_image_url,
-      published,
-    }),
+    body: JSON.stringify(body),
   });
 
   return { data: Array.isArray(data) ? data[0] : data, error };

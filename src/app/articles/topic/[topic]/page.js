@@ -130,7 +130,7 @@ export default async function TopicPage({ params }) {
                           src={featuredPost.cover_image_url}
                           alt={featuredPost.title}
                           fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="object-contain group-hover:scale-105 transition-transform duration-500"
                           priority
                         />
                       ) : (

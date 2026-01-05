@@ -217,7 +217,22 @@ export async function getPostBySlug(slug) {
 
   try {
     const enriched = await attachAuthorsToPosts([post]);
-    return { data: enriched[0] || null, error: null };
+    const resultPost = enriched[0] || null;
+
+    // Attach series info (cover image) when available so UIs can fallback to series cover
+    if (resultPost?.series_id) {
+      try {
+        const { data: seriesData } = await supabaseFetch(
+          `series?select=id,slug,title,cover_image_url&id=eq.${resultPost.series_id}&limit=1`
+        );
+        resultPost.series = seriesData?.[0] || null;
+      } catch (e) {
+        // ignore series fetch failures
+        resultPost.series = null;
+      }
+    }
+
+    return { data: resultPost, error: null };
   } catch (e) {
     console.error('Failed to attach author:', e);
     return { data: post, error: null };
@@ -361,7 +376,7 @@ export async function createPost(input, authorId) {
     return { data: null, error: { message: 'User ID is required' } };
   }
 
-  const token = getAuthToken();
+  const token = await getAuthToken();
   if (!token) {
     return { data: null, error: { message: 'Not authenticated. Please log in again.' } };
   }
@@ -422,29 +437,39 @@ export async function uploadCoverImage(file, authorId) {
   if (!file) return { url: null, error: { message: 'No file provided' } };
   if (!isSupabaseConfigured) return { url: null, error: { message: 'Supabase not configured' } };
 
-  const token = getAuthToken();
+  const token = await getAuthToken();
   if (!token) return { url: null, error: { message: 'Not authenticated' } };
 
   try {
-    const filePath = `covers/${authorId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
-    
-    const response = await fetch(`${SUPABASE_URL}/storage/v1/object/covers/${filePath}`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': file.type,
-      },
-      body: file,
-    });
+    const filePath = `${authorId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      return { url: null, error: err };
+    // Try primary buckets (prefer `blog-images`), fall back if bucket doesn't exist or returns 4xx
+    const bucketsToTry = ['blog-images', 'covers'];
+    for (const bucket of bucketsToTry) {
+      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${filePath}`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${token}`,
+          'Content-Type': file.type,
+        },
+        body: file,
+      });
+
+      if (res.ok) {
+        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filePath}`;
+        return { url: publicUrl, error: null };
+      }
+
+      // If 400/404 try next bucket, otherwise return error details
+      const errBody = await res.json().catch(() => ({ message: res.statusText }));
+      if (res.status >= 500) {
+        return { url: null, error: errBody };
+      }
+      // continue to next bucket for 4xx
     }
 
-    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/covers/${filePath}`;
-    return { url: publicUrl, error: null };
+    return { url: null, error: { message: 'Failed to upload cover image to configured buckets' } };
   } catch (e) {
     console.error('Error uploading cover:', e);
     return { url: null, error: { message: e.message } };
@@ -458,29 +483,36 @@ export async function uploadImage(file, authorId) {
   if (!file) return { url: null, error: { message: 'No file provided' } };
   if (!isSupabaseConfigured) return { url: null, error: { message: 'Supabase not configured' } };
 
-  const token = getAuthToken();
+  const token = await getAuthToken();
   if (!token) return { url: null, error: { message: 'Not authenticated' } };
 
   try {
-    const filePath = `images/${authorId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
-    
-    const response = await fetch(`${SUPABASE_URL}/storage/v1/object/images/${filePath}`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': file.type,
-      },
-      body: file,
-    });
+    const filePath = `${authorId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      return { url: null, error: err };
+    const bucketsToTry = ['blog-images', 'images'];
+    for (const bucket of bucketsToTry) {
+      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${filePath}`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${token}`,
+          'Content-Type': file.type,
+        },
+        body: file,
+      });
+
+      if (res.ok) {
+        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filePath}`;
+        return { url: publicUrl, error: null };
+      }
+
+      const errBody = await res.json().catch(() => ({ message: res.statusText }));
+      if (res.status >= 500) {
+        return { url: null, error: errBody };
+      }
     }
 
-    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/images/${filePath}`;
-    return { url: publicUrl, error: null };
+    return { url: null, error: { message: 'Failed to upload image to configured buckets' } };
   } catch (e) {
     console.error('Error uploading image:', e);
     return { url: null, error: { message: e.message } };
