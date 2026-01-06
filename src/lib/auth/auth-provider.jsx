@@ -19,7 +19,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { supabaseFetch } from '@/lib/supabase/fetch';
+import { supabaseFetch, clearCachedAuthToken, clearSupabaseCache } from '@/lib/supabase/fetch';
 
 /**
  * Auth context with default values
@@ -63,11 +63,18 @@ function getInitialAuthState() {
  * Wraps the app to provide auth state everywhere.
  */
 export function AuthProvider({ children }) {
+  const initialAuthStateRef = useRef(null);
+  if (!initialAuthStateRef.current) {
+    initialAuthStateRef.current = getInitialAuthState();
+  }
+
+  const initialAuthState = initialAuthStateRef.current;
+
   // Use lazy initialization to only run getInitialAuthState once
-  const [user, setUser] = useState(() => getInitialAuthState().user);
-  const [session, setSession] = useState(() => getInitialAuthState().session);
-  const [loading, setLoading] = useState(() => !getInitialAuthState().session);
-  const [initialized, setInitialized] = useState(() => !!getInitialAuthState().session);
+  const [user, setUser] = useState(() => initialAuthState.user);
+  const [session, setSession] = useState(() => initialAuthState.session);
+  const [loading, setLoading] = useState(() => !initialAuthState.session);
+  const [initialized, setInitialized] = useState(() => !!initialAuthState.session);
   
   // Prevent race conditions with refs
   const isMounted = useRef(true);
@@ -375,6 +382,8 @@ export function AuthProvider({ children }) {
       // Clear local state immediately
       setUser(null);
       setSession(null);
+      clearCachedAuthToken();
+      clearSupabaseCache();
 
       return { error: null };
     } catch (error) {

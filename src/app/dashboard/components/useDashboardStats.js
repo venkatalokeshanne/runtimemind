@@ -12,6 +12,31 @@ import { useState, useEffect } from 'react';
 import { FileText, Eye, TrendingUp } from 'lucide-react';
 import { getUserStats } from '@/modules/articles/services/posts';
 
+const STATS_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const statsCache = new Map();
+
+function getCachedStats(userId) {
+  if (!userId) return null;
+
+  const cached = statsCache.get(userId);
+  if (!cached) return null;
+
+  if (cached.expiresAt < Date.now()) {
+    statsCache.delete(userId);
+    return null;
+  }
+
+  return cached.data;
+}
+
+function setCachedStats(userId, data) {
+  if (!userId) return;
+  statsCache.set(userId, {
+    data,
+    expiresAt: Date.now() + STATS_CACHE_TTL_MS,
+  });
+}
+
 const DEFAULT_STATS = [
   { label: 'Total Posts', value: '0', icon: FileText, change: '+0 this month' },
   { label: 'Total Views', value: '0', icon: Eye, change: '+0 this week' },
@@ -24,18 +49,27 @@ export function useDashboardStats(user) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchStats() {
       if (!user?.id) {
         setLoading(false);
         return;
       }
-      
+
+      const cached = getCachedStats(user.id);
+      if (cached) {
+        setStats(cached);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
-      
+
       try {
         const { data: userStats, error: fetchError } = await getUserStats(user.id);
-        
+
         if (fetchError) {
           console.error('Failed to fetch user stats:', fetchError);
           setError(fetchError);
@@ -43,12 +77,12 @@ export function useDashboardStats(user) {
         }
 
         if (userStats) {
-          setStats([
-            { 
-              label: 'Total Posts', 
-              value: userStats.totalPosts.toString(), 
-              icon: FileText, 
-              change: `+${userStats.changes?.postsThisMonth || 0} this month` 
+          const nextStats = [
+            {
+              label: 'Total Posts',
+              value: userStats.totalPosts.toString(),
+              icon: FileText,
+              change: `+${userStats.changes?.postsThisMonth || 0} this month`
             },
             { 
               label: 'Total Views', 
@@ -59,20 +93,31 @@ export function useDashboardStats(user) {
             { 
               label: 'Published', 
               value: userStats.publishedPosts.toString(), 
-              icon: TrendingUp, 
-              change: `${userStats.draftPosts} drafts` 
+              icon: TrendingUp,
+              change: `${userStats.draftPosts} drafts`
             },
-          ]);
+          ];
+
+          if (!cancelled) {
+            setStats(nextStats);
+            setCachedStats(user.id, nextStats);
+          }
         }
       } catch (err) {
         console.error('Error fetching stats:', err);
         setError({ message: 'Failed to fetch stats' });
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
     fetchStats();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   return { stats, loading, error };

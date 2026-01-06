@@ -16,6 +16,34 @@ import { getPostsByAuthor } from '@/modules/articles/services/posts';
 import { useAuth } from '@/lib/auth';
 import { formatDateShort, getPostDisplayDate } from '@/lib/utils';
 
+const RECENT_POSTS_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const recentPostsCache = new Map();
+
+function getCachedPosts(userId, includeDrafts = true) {
+  if (!userId) return null;
+
+  const cacheKey = `${userId}:${includeDrafts ? 'withDrafts' : 'publishedOnly'}`;
+  const cached = recentPostsCache.get(cacheKey);
+  if (!cached) return null;
+
+  if (cached.expiresAt < Date.now()) {
+    recentPostsCache.delete(cacheKey);
+    return null;
+  }
+
+  return cached.data;
+}
+
+function setCachedPosts(userId, data, includeDrafts = true) {
+  if (!userId) return;
+
+  const cacheKey = `${userId}:${includeDrafts ? 'withDrafts' : 'publishedOnly'}`;
+  recentPostsCache.set(cacheKey, {
+    data,
+    expiresAt: Date.now() + RECENT_POSTS_TTL_MS,
+  });
+}
+
 function PostItem({ post }) {
   const displayDate = getPostDisplayDate(post);
   const formattedDate = formatDateShort(displayDate);
@@ -74,8 +102,17 @@ export function RecentPosts() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchRecentPosts() {
       if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      const cached = getCachedPosts(user.id, true);
+      if (cached) {
+        setPosts(cached);
         setLoading(false);
         return;
       }
@@ -83,7 +120,7 @@ export function RecentPosts() {
       try {
         setLoading(true);
         const { data, error } = await getPostsByAuthor(user.id, { includeDrafts: true });
-        
+
         if (error) {
           console.error('Failed to fetch recent posts:', error);
           setError(error);
@@ -91,16 +128,26 @@ export function RecentPosts() {
         }
 
         // Get the 3 most recent posts
-        setPosts((data || []).slice(0, 3));
+        const recent = (data || []).slice(0, 3);
+        if (!cancelled) {
+          setPosts(recent);
+          setCachedPosts(user.id, recent, true);
+        }
       } catch (err) {
         console.error('Error fetching recent posts:', err);
         setError({ message: 'Failed to load recent posts' });
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
     fetchRecentPosts();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   return (

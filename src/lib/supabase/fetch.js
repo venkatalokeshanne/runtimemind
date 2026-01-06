@@ -10,11 +10,75 @@
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+// Cache tokens in-memory to avoid repeated localStorage scans and NextAuth calls
+let cachedToken = null;
+let cachedExpiryMs = 0;
+
+// Lightweight response cache + in-flight deduplication to limit duplicate network requests
+const RESPONSE_CACHE_TTL_MS = 15_000;
+const responseCache = new Map();
+const inFlightRequests = new Map();
+
+function cloneData(data) {
+  if (data === null || data === undefined) return data;
+  if (typeof structuredClone === 'function') return structuredClone(data);
+  return JSON.parse(JSON.stringify(data));
+}
+
+function createCacheKey(method, endpoint, authHeader, body) {
+  const normalizedMethod = method?.toUpperCase() || 'GET';
+  const bodyKey = body
+    ? typeof body === 'string'
+      ? body
+      : JSON.stringify(body)
+    : '';
+
+  return `${normalizedMethod}:${endpoint}:${authHeader || ''}:${bodyKey}`;
+}
+
+function getCachedResponse(cacheKey) {
+  const cached = responseCache.get(cacheKey);
+  if (!cached) return null;
+  if (cached.expiresAt < Date.now()) {
+    responseCache.delete(cacheKey);
+    return null;
+  }
+  return cloneData(cached.payload);
+}
+
+function setCachedResponse(cacheKey, payload) {
+  responseCache.set(cacheKey, {
+    payload,
+    expiresAt: Date.now() + RESPONSE_CACHE_TTL_MS,
+  });
+}
+
+export function clearSupabaseCache() {
+  responseCache.clear();
+  inFlightRequests.clear();
+}
+
+function setCachedAuthToken(token, expiresAtSeconds) {
+  cachedToken = token;
+  // Prefer the provided expiry, otherwise assume the token is short-lived and refresh soon
+  if (expiresAtSeconds) {
+    cachedExpiryMs = expiresAtSeconds * 1000;
+  } else {
+    cachedExpiryMs = Date.now() + 5 * 60 * 1000; // 5 minute safety window
+  }
+}
+
+export function clearCachedAuthToken() {
+  cachedToken = null;
+  cachedExpiryMs = 0;
+}
+
 /**
  * Get auth token from localStorage
  */
 export async function getAuthToken() {
   if (typeof window === 'undefined') return null;
+
   try {
     // Try NextAuth session first (client-side only)
     try {
@@ -22,11 +86,25 @@ export async function getAuthToken() {
       const session = await getSession();
       // If NextAuth flagged a refresh error, skip using the cached token so downstream
       // calls can trigger a fresh auth flow instead of relying on stale credentials.
-      if (session?.error) return null;
-      if (session?.accessToken) return session.accessToken;
-      if (session?.accessToken === undefined && session?.user?.accessToken) return session.user.accessToken;
+      if (session?.error) {
+        clearCachedAuthToken();
+        return null;
+      }
+      if (session?.accessToken) {
+        setCachedAuthToken(session.accessToken, session.expires_at);
+        return session.accessToken;
+      }
+      if (session?.accessToken === undefined && session?.user?.accessToken) {
+        setCachedAuthToken(session.user.accessToken, session.expires_at);
+        return session.user.accessToken;
+      }
     } catch (e) {
       // ignore if next-auth not available or fails
+    }
+
+    // Return cached token if it is still valid for at least 5 more seconds
+    if (cachedToken && cachedExpiryMs - Date.now() > 5000) {
+      return cachedToken;
     }
     // First check our custom storage key
     const customKey = 'runtimemind-auth';
@@ -36,6 +114,7 @@ export async function getAuthToken() {
       // Check if token is not expired
       if (parsed?.access_token && parsed?.expires_at) {
         if (parsed.expires_at * 1000 > Date.now()) {
+          setCachedAuthToken(parsed.access_token, parsed.expires_at);
           return parsed.access_token;
         }
       }
@@ -52,6 +131,7 @@ export async function getAuthToken() {
           // Check if token is not expired
           if (parsed?.access_token && parsed?.expires_at) {
             if (parsed.expires_at * 1000 > Date.now()) {
+              setCachedAuthToken(parsed.access_token, parsed.expires_at);
               return parsed.access_token;
             }
           }
@@ -61,6 +141,7 @@ export async function getAuthToken() {
   } catch (e) {
     console.warn('Failed to get auth token:', e);
   }
+  clearCachedAuthToken();
   return null;
 }
 
@@ -77,6 +158,8 @@ export async function supabaseFetch(endpoint, options = {}) {
   }
 
   const token = options.headers?.Authorization ? null : await getAuthToken();
+
+  const method = options.method?.toUpperCase() || 'GET';
   
   const headers = {
     apikey: SUPABASE_ANON_KEY,
@@ -85,55 +168,88 @@ export async function supabaseFetch(endpoint, options = {}) {
     ...options.headers,
   };
 
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const cacheKey = createCacheKey(method, endpoint, headers.Authorization, options.body);
 
-  // If unauthorized or specific PostgREST JWT expired error, try refreshing session once
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: response.statusText }));
-
-    const isJwtExpired = (error && (error.message === 'JWT expired' || error.code === 'PGRST303'));
-    if (isJwtExpired && !options._retry) {
-      try {
-        // Force NextAuth server session refresh
-        await fetch('/api/auth/session', { method: 'GET', cache: 'no-store' });
-      } catch (e) {
-        // ignore
-      }
-
-      // Re-run to pick up refreshed token
-      const token = await getAuthToken();
-      const retryHeaders = {
-        apikey: SUPABASE_ANON_KEY,
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.headers,
-      };
-
-      const retryResponse = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
-        ...options,
-        headers: retryHeaders,
-      });
-
-      if (!retryResponse.ok) {
-        const retryError = await retryResponse.json().catch(() => ({ message: retryResponse.statusText }));
-        return { data: null, error: retryError };
-      }
-
-      const retryText = await retryResponse.text();
-      const retryData = retryText ? JSON.parse(retryText) : null;
-      return { data: retryData, error: null };
+  if (method === 'GET' && !options.noCache) {
+    const cached = getCachedResponse(cacheKey);
+    if (cached !== null) {
+      return { data: cached, error: null };
     }
 
-    return { data: null, error };
+    const inflight = inFlightRequests.get(cacheKey);
+    if (inflight) {
+      const deduped = await inflight;
+      return { data: cloneData(deduped.data), error: deduped.error || null };
+    }
   }
 
-  // Handle empty responses (like DELETE)
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
-  return { data, error: null };
+  const requestPromise = (async () => {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    // If unauthorized or specific PostgREST JWT expired error, try refreshing session once
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: response.statusText }));
+
+      const isJwtExpired = (error && (error.message === 'JWT expired' || error.code === 'PGRST303'));
+      if (isJwtExpired && !options._retry) {
+        try {
+          // Force NextAuth server session refresh
+          await fetch('/api/auth/session', { method: 'GET', cache: 'no-store' });
+        } catch (e) {
+          // ignore
+        }
+
+        // Re-run to pick up refreshed token
+        const token = await getAuthToken();
+        const retryHeaders = {
+          apikey: SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...options.headers,
+        };
+
+        const retryResponse = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
+          ...options,
+          headers: retryHeaders,
+        });
+
+        if (!retryResponse.ok) {
+          const retryError = await retryResponse.json().catch(() => ({ message: retryResponse.statusText }));
+          return { data: null, error: retryError };
+        }
+
+        const retryText = await retryResponse.text();
+        const retryData = retryText ? JSON.parse(retryText) : null;
+        return { data: retryData, error: null };
+      }
+
+      return { data: null, error };
+    }
+
+    // Handle empty responses (like DELETE)
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : null;
+    return { data, error: null };
+  })();
+
+  if (method === 'GET' && !options.noCache) {
+    inFlightRequests.set(cacheKey, requestPromise);
+  }
+
+  const result = await requestPromise.finally(() => {
+    if (method === 'GET' && !options.noCache) {
+      inFlightRequests.delete(cacheKey);
+    }
+  });
+
+  if (method === 'GET' && !options.noCache && !result.error) {
+    setCachedResponse(cacheKey, result.data);
+  }
+
+  return result;
 }
 
 /**
