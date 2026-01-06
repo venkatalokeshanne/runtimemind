@@ -35,7 +35,11 @@ export async function POST(request) {
     let responseFormat;
 
     if (type === 'title') {
-      prompt = `Based on the following blog post content, generate 3 compelling, SEO-friendly title options. Each title should be engaging, clear, and under 60 characters.
+      prompt = `Based on the following blog post content, generate 3 compelling, SEO-focused, viral-ready title options. Each title should:
+- Be engaging and clickworthy with emotional or power words
+- Include the primary search keyword naturally
+- Aim for high click-through potential on social and search
+- Stay under 60 characters when possible
 
 Content:
 ${truncatedContent}
@@ -43,10 +47,11 @@ ${truncatedContent}
 Respond with ONLY a JSON array of 3 title strings, no explanation. Example: ["Title 1", "Title 2", "Title 3"]`;
       responseFormat = 'titles';
     } else if (type === 'excerpt') {
-      prompt = `Based on the following blog post content, write a compelling excerpt/meta description. It should:
-- Be 150-160 characters max
-- Summarize the key value proposition
-- Be engaging and encourage clicks
+      prompt = `Based on the following blog post content, write a compelling, SEO-optimized excerpt/meta description. It should:
+- Be at least 30 words
+- Summarize the key value proposition with shareable, viral energy
+- Include primary keywords naturally near the beginning
+- Encourage clicks with a clear benefit or curiosity hook
 - Not include the title
 
 Content:
@@ -95,11 +100,11 @@ ${truncatedContent}
 Respond with ONLY the topic name, nothing else. Example: Web Development`;
       responseFormat = 'topic';
     } else if (type === 'all') {
-      prompt = `You are an SEO expert. Based on the following blog post content, generate optimized metadata that will help this article rank #1 in search engines.
+      prompt = `You are an SEO expert. Based on the following blog post content, generate optimized metadata that will help this article rank #1 in search engines and earn viral-level engagement.
 
 Generate:
-1. A compelling, click-worthy title (under 60 characters) that includes the main keyword
-2. A meta description (150-160 characters) that includes keywords and a call-to-action
+1. A compelling, click-worthy title (under 60 characters) that includes the main keyword and hooks readers
+2. A meta description of at least 30 words that includes primary keywords and a call-to-action with viral/sharing appeal
 3. 6-10 high-impact SEO tags including:
    - 2-3 primary keywords (high search volume)
    - 2-3 long-tail keywords (specific search phrases)
