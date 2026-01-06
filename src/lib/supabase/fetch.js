@@ -14,6 +14,11 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 let cachedToken = null;
 let cachedExpiryMs = 0;
 
+// Cache NextAuth session lookups to avoid repeated /api/auth/session calls
+let cachedSession = null;
+let cachedSessionExpiryMs = 0;
+let inFlightSessionPromise = null;
+
 // Lightweight response cache + in-flight deduplication to limit duplicate network requests
 const RESPONSE_CACHE_TTL_MS = 15_000;
 const responseCache = new Map();
@@ -68,9 +73,16 @@ function setCachedAuthToken(token, expiresAtSeconds) {
   }
 }
 
+function clearCachedSession() {
+  cachedSession = null;
+  cachedSessionExpiryMs = 0;
+  inFlightSessionPromise = null;
+}
+
 export function clearCachedAuthToken() {
   cachedToken = null;
   cachedExpiryMs = 0;
+  clearCachedSession();
 }
 
 /**
@@ -79,11 +91,39 @@ export function clearCachedAuthToken() {
 export async function getAuthToken() {
   if (typeof window === 'undefined') return null;
 
+  // Return cached token if it is still valid for at least 5 more seconds
+  if (cachedToken && cachedExpiryMs - Date.now() > 5000) {
+    return cachedToken;
+  }
+
   try {
-    // Try NextAuth session first (client-side only)
+    // Try NextAuth session (client-side only) with caching to avoid repeated /api/auth/session calls
     try {
-      const { getSession } = await import('next-auth/react');
-      const session = await getSession();
+      if (!cachedSession || cachedSessionExpiryMs < Date.now()) {
+        if (!inFlightSessionPromise) {
+          const loadSession = async () => {
+            const { getSession } = await import('next-auth/react');
+            return getSession();
+          };
+          inFlightSessionPromise = loadSession()
+            .then((session) => {
+              cachedSession = session;
+              // Cache the session for 30 seconds or until shortly before it expires
+              if (session?.expires_at) {
+                cachedSessionExpiryMs = Math.min(session.expires_at * 1000 - 5000, Date.now() + 30_000);
+              } else {
+                cachedSessionExpiryMs = Date.now() + 30_000;
+              }
+              return session;
+            })
+            .finally(() => {
+              inFlightSessionPromise = null;
+            });
+        }
+        cachedSession = await inFlightSessionPromise;
+      }
+
+      const session = cachedSession;
       // If NextAuth flagged a refresh error, skip using the cached token so downstream
       // calls can trigger a fresh auth flow instead of relying on stale credentials.
       if (session?.error) {
@@ -100,12 +140,9 @@ export async function getAuthToken() {
       }
     } catch (e) {
       // ignore if next-auth not available or fails
+      clearCachedSession();
     }
 
-    // Return cached token if it is still valid for at least 5 more seconds
-    if (cachedToken && cachedExpiryMs - Date.now() > 5000) {
-      return cachedToken;
-    }
     // First check our custom storage key
     const customKey = 'runtimemind-auth';
     const customStored = localStorage.getItem(customKey);
@@ -119,7 +156,7 @@ export async function getAuthToken() {
         }
       }
     }
-    
+
     // Fallback: Find the Supabase auth token in localStorage
     // Supabase uses key format: sb-<project-ref>-auth-token
     for (let i = 0; i < localStorage.length; i++) {
