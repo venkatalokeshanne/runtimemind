@@ -14,6 +14,7 @@ import { getUserStats } from '@/modules/articles/services/posts';
 
 const STATS_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
 const statsCache = new Map();
+const inFlightStats = new Map();
 
 function getCachedStats(userId) {
   if (!userId) return null;
@@ -35,6 +36,57 @@ function setCachedStats(userId, data) {
     data,
     expiresAt: Date.now() + STATS_CACHE_TTL_MS,
   });
+}
+
+async function fetchStatsForUser(userId) {
+  if (!userId) return { data: null, error: null };
+
+  const existing = inFlightStats.get(userId);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    const { data: userStats, error } = await getUserStats(userId);
+    if (error) {
+      console.error('Failed to fetch user stats:', error);
+      return { data: null, error };
+    }
+
+    if (!userStats) {
+      return { data: null, error: { message: 'No stats returned' } };
+    }
+
+    const nextStats = [
+      {
+        label: 'Total Posts',
+        value: userStats.totalPosts.toString(),
+        icon: FileText,
+        change: `+${userStats.changes?.postsThisMonth || 0} this month`
+      },
+      {
+        label: 'Total Views',
+        value: userStats.totalViews.toLocaleString(),
+        icon: Eye,
+        change: `+${userStats.changes?.viewsThisWeek || 0} this week`
+      },
+      {
+        label: 'Published',
+        value: userStats.publishedPosts.toString(),
+        icon: TrendingUp,
+        change: `${userStats.draftPosts} drafts`
+      },
+    ];
+
+    setCachedStats(userId, nextStats);
+    return { data: nextStats, error: null };
+  })();
+
+  inFlightStats.set(userId, promise);
+
+  try {
+    return await promise;
+  } finally {
+    inFlightStats.delete(userId);
+  }
 }
 
 const DEFAULT_STATS = [
@@ -68,40 +120,15 @@ export function useDashboardStats(user) {
       setError(null);
 
       try {
-        const { data: userStats, error: fetchError } = await getUserStats(user.id);
+        const { data: fetchedStats, error: fetchError } = await fetchStatsForUser(user.id);
 
         if (fetchError) {
-          console.error('Failed to fetch user stats:', fetchError);
           setError(fetchError);
           return;
         }
 
-        if (userStats) {
-          const nextStats = [
-            {
-              label: 'Total Posts',
-              value: userStats.totalPosts.toString(),
-              icon: FileText,
-              change: `+${userStats.changes?.postsThisMonth || 0} this month`
-            },
-            { 
-              label: 'Total Views', 
-              value: userStats.totalViews.toLocaleString(), 
-              icon: Eye, 
-              change: `+${userStats.changes?.viewsThisWeek || 0} this week` 
-            },
-            { 
-              label: 'Published', 
-              value: userStats.publishedPosts.toString(), 
-              icon: TrendingUp,
-              change: `${userStats.draftPosts} drafts`
-            },
-          ];
-
-          if (!cancelled) {
-            setStats(nextStats);
-            setCachedStats(user.id, nextStats);
-          }
+        if (fetchedStats && !cancelled) {
+          setStats(fetchedStats);
         }
       } catch (err) {
         console.error('Error fetching stats:', err);
