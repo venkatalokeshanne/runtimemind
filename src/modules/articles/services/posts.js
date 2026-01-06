@@ -19,6 +19,26 @@ const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 const POST_LIST_FIELDS = 'id,slug,title,excerpt,cover_image_url,published,published_at,created_at,author_id,read_time_minutes,likes_count,comments_count,view_count';
 const POST_FULL_FIELDS = 'id,slug,title,content,excerpt,cover_image_url,published,published_at,created_at,updated_at,author_id,series_id,series_order,tags,seo_title,seo_description,featured,read_time_minutes,view_count';
 
+// Short-lived caches to avoid re-fetching identical article-adjacent queries across
+// server metadata generation and the rendered article page.
+const POST_CACHE_TTL_MS = 60_000;
+const postCache = new Map();
+const postInFlight = new Map();
+
+function cacheResult(cache, key, payload) {
+  cache.set(key, { payload, expiresAt: Date.now() + POST_CACHE_TTL_MS });
+}
+
+function getCachedResult(cache, key) {
+  const cached = cache.get(key);
+  if (!cached) return null;
+  if (cached.expiresAt < Date.now()) {
+    cache.delete(key);
+    return null;
+  }
+  return cached.payload;
+}
+
 /**
  * Attach author profiles to posts
  */
@@ -201,41 +221,61 @@ export async function getPostBySlug(slug) {
     return getMockPostBySlug(slug);
   }
 
-  const { data, error } = await supabaseFetch(
-    `posts?select=${POST_FULL_FIELDS}&slug=eq.${slug}&published=eq.true&limit=1`
-  );
+  const cacheKey = `post:${slug}`;
+  const cached = getCachedResult(postCache, cacheKey);
+  if (cached) return cached;
 
-  if (error) {
-    console.error('Error fetching post:', error);
-    return { data: null, error: { message: 'Failed to load post', code: error.code } };
-  }
+  const inflight = postInFlight.get(cacheKey);
+  if (inflight) return inflight;
 
-  const post = data?.[0];
-  if (!post) {
-    return { data: null, error: { message: 'Post not found', code: 'NOT_FOUND' } };
-  }
+  const requestPromise = (async () => {
+    const { data, error } = await supabaseFetch(
+      `posts?select=${POST_FULL_FIELDS}&slug=eq.${slug}&published=eq.true&limit=1`
+    );
 
-  try {
-    const enriched = await attachAuthorsToPosts([post]);
-    const resultPost = enriched[0] || null;
-
-    // Attach series info (cover image) when available so UIs can fallback to series cover
-    if (resultPost?.series_id) {
-      try {
-        const { data: seriesData } = await supabaseFetch(
-          `series?select=id,slug,title,cover_image_url&id=eq.${resultPost.series_id}&limit=1`
-        );
-        resultPost.series = seriesData?.[0] || null;
-      } catch (e) {
-        // ignore series fetch failures
-        resultPost.series = null;
-      }
+    if (error) {
+      console.error('Error fetching post:', error);
+      return { data: null, error: { message: 'Failed to load post', code: error.code } };
     }
 
-    return { data: resultPost, error: null };
-  } catch (e) {
-    console.error('Failed to attach author:', e);
-    return { data: post, error: null };
+    const post = data?.[0];
+    if (!post) {
+      return { data: null, error: { message: 'Post not found', code: 'NOT_FOUND' } };
+    }
+
+    try {
+      const enriched = await attachAuthorsToPosts([post]);
+      const resultPost = enriched[0] || null;
+
+      // Attach series info (cover image) when available so UIs can fallback to series cover
+      if (resultPost?.series_id) {
+        try {
+          const { data: seriesData } = await supabaseFetch(
+            `series?select=id,slug,title,cover_image_url&id=eq.${resultPost.series_id}&limit=1`
+          );
+          resultPost.series = seriesData?.[0] || null;
+        } catch (e) {
+          // ignore series fetch failures
+          resultPost.series = null;
+        }
+      }
+
+      const payload = { data: resultPost, error: null };
+      cacheResult(postCache, cacheKey, payload);
+      return payload;
+    } catch (e) {
+      console.error('Failed to attach author:', e);
+      const payload = { data: post, error: null };
+      cacheResult(postCache, cacheKey, payload);
+      return payload;
+    }
+  })();
+
+  postInFlight.set(cacheKey, requestPromise);
+  try {
+    return await requestPromise;
+  } finally {
+    postInFlight.delete(cacheKey);
   }
 }
 
@@ -583,38 +623,58 @@ export async function getRelatedPosts(postId, seriesId, currentSlug, limit = 4) 
     return { data: [], error: null };
   }
 
+  const cacheKey = `related:${postId || 'none'}:${seriesId || 'none'}:${currentSlug || 'none'}:${limit}`;
+  const cached = getCachedResult(postCache, cacheKey);
+  if (cached) return cached;
+
+  const inflight = postInFlight.get(cacheKey);
+  if (inflight) return inflight;
+
   let url = `posts?select=id,slug,title,excerpt,cover_image_url,published_at,series_id&published=eq.true&slug=neq.${currentSlug}&limit=${limit}`;
-  
+
   if (seriesId) {
     url += `&series_id=eq.${seriesId}&order=series_order.asc`;
   } else {
     url += '&order=published_at.desc';
   }
 
-  const { data, error } = await supabaseFetch(url);
+  const requestPromise = (async () => {
+    const { data, error } = await supabaseFetch(url);
 
-  if (error) {
-    console.error('Error fetching related posts:', error);
-    return { data: [], error };
-  }
-
-  // If we found nothing in the series (common when the post is the only one),
-  // fall back to recent published posts so the Related Posts section is never empty.
-  if ((!data || data.length === 0) && seriesId) {
-    try {
-      const { data: fallback, error: fallbackError } = await supabaseFetch(
-        `posts?select=id,slug,title,excerpt,cover_image_url,published_at,series_id&published=eq.true&slug=neq.${currentSlug}&order=published_at.desc&limit=${limit}`
-      );
-
-      if (!fallbackError && fallback && fallback.length > 0) {
-        return { data: fallback, error: null };
-      }
-    } catch (e) {
-      // ignore and continue to return empty
+    if (error) {
+      console.error('Error fetching related posts:', error);
+      return { data: [], error };
     }
-  }
 
-  return { data: data || [], error: null };
+    // If we found nothing in the series (common when the post is the only one),
+    // fall back to recent published posts so the Related Posts section is never empty.
+    if ((!data || data.length === 0) && seriesId) {
+      try {
+        const { data: fallback, error: fallbackError } = await supabaseFetch(
+          `posts?select=id,slug,title,excerpt,cover_image_url,published_at,series_id&published=eq.true&slug=neq.${currentSlug}&order=published_at.desc&limit=${limit}`
+        );
+
+        if (!fallbackError && fallback && fallback.length > 0) {
+          const payload = { data: fallback, error: null };
+          cacheResult(postCache, cacheKey, payload);
+          return payload;
+        }
+      } catch (e) {
+        // ignore and continue to return empty
+      }
+    }
+
+    const payload = { data: data || [], error: null };
+    cacheResult(postCache, cacheKey, payload);
+    return payload;
+  })();
+
+  postInFlight.set(cacheKey, requestPromise);
+  try {
+    return await requestPromise;
+  } finally {
+    postInFlight.delete(cacheKey);
+  }
 }
 
 /**

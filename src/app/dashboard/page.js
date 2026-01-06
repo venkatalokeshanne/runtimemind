@@ -1,40 +1,21 @@
 /**
- * ============================================================================
+ * =============================================================================
  * DASHBOARD OVERVIEW PAGE
- * ============================================================================
- * 
- * Main dashboard page with stats and recent activity.
- * Clean architecture with componentized sections.
- * 
- * ============================================================================
+ * =============================================================================
+ *
+ * Server component wrapper that sets metadata and renders the client dashboard
+ * experience.
+ *
+ * =============================================================================
  */
 
-'use client';
+import { DashboardContent } from './components';
 
-import { useAuth } from '@/lib/auth';
-import { 
-  DashboardHeader, 
-  StatsGrid, 
-  QuickActions, 
-  RecentPosts, 
-  useDashboardStats 
-} from './components';
+export const metadata = {
+  title: 'Dashboard | RuntimeMind',
+  description: 'View your recent posts, stats, and quick actions.',
+};
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-  const { stats, loading, error } = useDashboardStats(user);
-
-  // Show error state if stats failed to load
-  if (error) {
-    console.warn('Dashboard stats error:', error);
-  }
-
-  return (
-    <div className="space-y-8">
-      <DashboardHeader user={user} />
-      <StatsGrid stats={stats} loading={loading} />
-      <QuickActions />
-      <RecentPosts />
-    </div>
-  );
+  return <DashboardContent />;
 }

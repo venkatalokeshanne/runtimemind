@@ -9,6 +9,29 @@
 
 import { supabaseFetch, getAuthToken } from '@/lib/supabase/fetch';
 
+// Short-lived in-memory cache for like lookups to avoid duplicate requests during navigation
+const LIKE_INFO_TTL_MS = 15_000;
+const likeInfoCache = new Map();
+const likeInfoInFlight = new Map();
+
+function buildLikeCacheKey(postId, authorId) {
+  return `${postId || 'none'}:${authorId || 'anon'}`;
+}
+
+function getCachedLikeInfo(key) {
+  const cached = likeInfoCache.get(key);
+  if (!cached) return null;
+  if (cached.expiresAt < Date.now()) {
+    likeInfoCache.delete(key);
+    return null;
+  }
+  return cached.payload;
+}
+
+function setCachedLikeInfo(key, payload) {
+  likeInfoCache.set(key, { payload, expiresAt: Date.now() + LIKE_INFO_TTL_MS });
+}
+
 // Check if Supabase is configured
 const isSupabaseConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -64,34 +87,57 @@ export async function hasUserLiked(postId, authorId) {
 export async function getPostLikeInfo(postId, authorId = null) {
   if (!isSupabaseConfigured) {
     const likes = mockLikes.get(postId) || mockLikes.get('1') || new Set();
-    return { 
-      count: likes.size, 
-      liked: authorId ? likes.has(authorId) : false, 
-      error: null 
+    return {
+      count: likes.size,
+      liked: authorId ? likes.has(authorId) : false,
+      error: null
     };
   }
 
-  // Get count
-  const { data: countData, error: countError } = await supabaseFetch(
-    `likes?select=id&post_id=eq.${postId}`
-  );
-
-  if (countError) {
-    return { count: 0, liked: false, error: countError };
+  const cacheKey = buildLikeCacheKey(postId, authorId);
+  const cached = getCachedLikeInfo(cacheKey);
+  if (cached) {
+    return cached;
   }
 
-  const count = Array.isArray(countData) ? countData.length : 0;
+  const inflight = likeInfoInFlight.get(cacheKey);
+  if (inflight) {
+    return inflight;
+  }
 
-  // Check if user liked
-  let liked = false;
-  if (authorId) {
-    const { data } = await supabaseFetch(
-      `likes?select=id&post_id=eq.${postId}&author_id=eq.${authorId}&limit=1`
+  const requestPromise = (async () => {
+    // Get count
+    const { data: countData, error: countError } = await supabaseFetch(
+      `likes?select=id&post_id=eq.${postId}`
     );
-    liked = Array.isArray(data) && data.length > 0;
-  }
 
-  return { count, liked, error: null };
+    if (countError) {
+      return { count: 0, liked: false, error: countError };
+    }
+
+    const count = Array.isArray(countData) ? countData.length : 0;
+
+    // Check if user liked
+    let liked = false;
+    if (authorId) {
+      const { data } = await supabaseFetch(
+        `likes?select=id&post_id=eq.${postId}&author_id=eq.${authorId}&limit=1`
+      );
+      liked = Array.isArray(data) && data.length > 0;
+    }
+
+    const result = { count, liked, error: null };
+    setCachedLikeInfo(cacheKey, result);
+    return result;
+  })();
+
+  likeInfoInFlight.set(cacheKey, requestPromise);
+
+  try {
+    return await requestPromise;
+  } finally {
+    likeInfoInFlight.delete(cacheKey);
+  }
 }
 
 /**

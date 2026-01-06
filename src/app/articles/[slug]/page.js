@@ -22,9 +22,13 @@
  * ============================================================================
  */
 
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { getPostBySlug, getAllPostSlugs } from '@/modules/articles/services';
 import { PostContent, ViewTracker } from '@/modules/articles/components';
+
+const metadataBase = new URL('https://www.runtimemind.com');
+const getPostBySlugCached = cache(async (slug) => getPostBySlug(slug));
 
 /**
  * Generate static paths for all posts at build time.
@@ -61,7 +65,7 @@ export async function generateStaticParams() {
  */
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const { data: post } = await getPostBySlug(slug);
+  const { data: post } = await getPostBySlugCached(slug);
   
   if (!post) {
     return {
@@ -79,6 +83,15 @@ export async function generateMetadata({ params }) {
   const timestamp = post.updated_at ? Date.parse(post.updated_at) : post.published_at ? Date.parse(post.published_at) : Date.now();
   const cacheBuster = encodeURIComponent(timestamp);
   const ogImage = post.cover_image_url || post.series?.cover_image_url || `https://www.runtimemind.com/api/og?title=${encodeURIComponent(post.title)}&type=article&author=${encodeURIComponent(post.author?.name || '')}&v=${cacheBuster}`;
+  const ogImages = [
+    {
+      url: ogImage,
+      width: 1200,
+      height: 630,
+      alt: metaTitle,
+      type: 'image/png',
+    },
+  ];
   
   return {
     title: metaTitle,
@@ -91,7 +104,9 @@ export async function generateMetadata({ params }) {
     alternates: {
       canonical: canonicalUrl,
     },
-    
+
+    metadataBase,
+
     // Robots meta for indexing control
     robots: {
       index: true,
@@ -113,25 +128,17 @@ export async function generateMetadata({ params }) {
       modifiedTime: post.updated_at,
       authors: post.author ? [post.author.name] : [],
       tags: post.tags || [],
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: metaTitle,
-          type: 'image/png',
-        }
-      ],
+      images: ogImages,
     },
-    
+
     // Twitter card (optimized for large preview)
     twitter: {
       card: 'summary_large_image',
       title: metaTitle,
       description: metaDescription,
       site: '@runtimemind',
-      creator: post.author?.twitter_handle || '@runtimemind',
-      images: [ogImage],
+      creator: post.author?.twitter_handle || post.author?.twitter || post.author?.name || '@runtimemind',
+      images: ogImages.map((image) => image.url),
     },
   };
 }
@@ -151,7 +158,7 @@ function generateArticleJsonLd(post, slug) {
     '@type': 'Article',
     headline: post.seo_title || post.title,
     description: post.seo_description || post.excerpt,
-    image: post.cover_image_url || 'https://www.runtimemind.com/og-default.png',
+    image: [post.cover_image_url || 'https://www.runtimemind.com/og-default.png'],
     datePublished: post.published_at,
     dateModified: post.updated_at || post.published_at,
     author: {
@@ -177,7 +184,20 @@ function generateArticleJsonLd(post, slug) {
     inLanguage: 'en-US',
     isAccessibleForFree: true,
     creativeWorkStatus: 'Published',
+    potentialAction: {
+      '@type': 'ReadAction',
+      target: canonicalArticleUrl(slug),
+      expectsAcceptanceOf: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+    },
   };
+}
+
+function canonicalArticleUrl(slug) {
+  return `https://www.runtimemind.com/articles/${slug}`;
 }
 
 /**
@@ -221,8 +241,8 @@ export default async function PostPage({ params, searchParams }) {
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
   const fromSeries = resolvedSearchParams?.from === 'series';
-  
-  const { data: post, error } = await getPostBySlug(slug);
+
+  const { data: post, error } = await getPostBySlugCached(slug);
   
   // 404 if post not found
   if (error?.code === 'NOT_FOUND' || !post) {

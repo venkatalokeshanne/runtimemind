@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * ============================================================================
  * RECENT POSTS COMPONENT
@@ -15,6 +17,64 @@ import { Button } from '@/ui/button';
 import { getPostsByAuthor } from '@/modules/articles/services/posts';
 import { useAuth } from '@/lib/auth';
 import { formatDateShort, getPostDisplayDate } from '@/lib/utils';
+
+const RECENT_POSTS_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const recentPostsCache = new Map();
+const inFlightRecentPosts = new Map();
+
+function getCachedPosts(userId, includeDrafts = true) {
+  if (!userId) return null;
+
+  const cacheKey = `${userId}:${includeDrafts ? 'withDrafts' : 'publishedOnly'}`;
+  const cached = recentPostsCache.get(cacheKey);
+  if (!cached) return null;
+
+  if (cached.expiresAt < Date.now()) {
+    recentPostsCache.delete(cacheKey);
+    return null;
+  }
+
+  return cached.data;
+}
+
+function setCachedPosts(userId, data, includeDrafts = true) {
+  if (!userId) return;
+
+  const cacheKey = `${userId}:${includeDrafts ? 'withDrafts' : 'publishedOnly'}`;
+  recentPostsCache.set(cacheKey, {
+    data,
+    expiresAt: Date.now() + RECENT_POSTS_TTL_MS,
+  });
+}
+
+async function fetchRecentPostsForUser(userId, includeDrafts = true) {
+  if (!userId) return { data: [], error: null };
+
+  const cacheKey = `${userId}:${includeDrafts ? 'withDrafts' : 'publishedOnly'}`;
+  const existing = inFlightRecentPosts.get(cacheKey);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    const { data, error } = await getPostsByAuthor(userId, { includeDrafts });
+
+    if (error) {
+      console.error('Failed to fetch recent posts:', error);
+      return { data: [], error };
+    }
+
+    const recent = (data || []).slice(0, 3);
+    setCachedPosts(userId, recent, includeDrafts);
+    return { data: recent, error: null };
+  })();
+
+  inFlightRecentPosts.set(cacheKey, promise);
+
+  try {
+    return await promise;
+  } finally {
+    inFlightRecentPosts.delete(cacheKey);
+  }
+}
 
 function PostItem({ post }) {
   const displayDate = getPostDisplayDate(post);
@@ -74,33 +134,48 @@ export function RecentPosts() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchRecentPosts() {
       if (!user?.id) {
         setLoading(false);
         return;
       }
 
+      const cached = getCachedPosts(user.id, true);
+      if (cached) {
+        setPosts(cached);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const { data, error } = await getPostsByAuthor(user.id, { includeDrafts: true });
-        
+        const { data, error } = await fetchRecentPostsForUser(user.id, true);
+
         if (error) {
-          console.error('Failed to fetch recent posts:', error);
           setError(error);
           return;
         }
 
-        // Get the 3 most recent posts
-        setPosts((data || []).slice(0, 3));
+        if (!cancelled) {
+          setPosts(data);
+        }
       } catch (err) {
         console.error('Error fetching recent posts:', err);
         setError({ message: 'Failed to load recent posts' });
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
     fetchRecentPosts();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   return (

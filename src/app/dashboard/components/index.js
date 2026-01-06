@@ -15,3 +15,4 @@ export { QuickActionItem } from './QuickActionItem';
 export { QuickActions } from './QuickActions';
 export { RecentPosts } from './RecentPosts';
 export { useDashboardStats } from './useDashboardStats';
+export { DashboardContent } from './DashboardContent';
