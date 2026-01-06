@@ -27,7 +27,7 @@
  */
 
 import { Suspense } from 'react';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist, Geist_Mono, Newsreader } from 'next/font/google';
 import ClientProviders from '@/components/ClientProviders';
 import { SiteHeader, SiteFooter } from '@/modules/layout/components';
 import './globals.css';
@@ -54,6 +54,13 @@ const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
   display: 'swap',
+});
+
+const newsreader = Newsreader({
+  variable: '--font-newsreader',
+  subsets: ['latin'],
+  display: 'swap',
+  style: 'normal',
 });
 
 /**
@@ -256,8 +263,9 @@ export default async function RootLayout({ children }) {
       </head>
       <body
         className={`
-          ${geistSans.variable} 
-          ${geistMono.variable} 
+          ${geistSans.variable}
+          ${geistMono.variable}
+          ${newsreader.variable}
           font-sans antialiased
           min-h-screen flex flex-col
         `}

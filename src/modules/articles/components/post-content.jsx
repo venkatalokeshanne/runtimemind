@@ -12,9 +12,9 @@
  *    Proper heading sizes, paragraph spacing, list styles.
  * 
  * 2. MAX WIDTH:
- *    Content constrained to ~65 characters for optimal readability.
+ *    Content constrained to ~72 characters for optimal readability.
  *    Research shows 45-75 chars per line is ideal.
- * 
+ *
  * 3. SEMANTIC HTML:
  *    Content wrapped in <article> with proper heading hierarchy.
  * 
@@ -48,7 +48,7 @@ export function PostContent({ post, fromSeries = false }) {
   const readingTime = post.read_time_minutes || 5;
 
   return (
-    <article className="max-w-2xl mx-auto">
+    <article className="mx-auto w-full max-w-[72ch] px-4 sm:px-6">
       {/* Post Header */}
       <header className="mb-8 md:mb-12">
         {/* Title - the only H1 on the page (SEO) */}

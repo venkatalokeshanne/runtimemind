@@ -77,6 +77,8 @@
   
   /* TYPOGRAPHY */
   --font-sans: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ui: var(--font-sans);
+  --font-reading: var(--font-newsreader), 'Iowan Old Style', 'Georgia', 'Times New Roman', serif;
   --font-mono: var(--font-geist-mono), 'SF Mono', 'Fira Code', monospace;
   
   /* SPACING - 4px base unit */
@@ -205,6 +207,7 @@
 html {
   /* Smooth theme transitions */
   color-scheme: light;
+  font-size: clamp(16px, 0.45vw + 15px, 18px);
 }
 
 html.dark {
@@ -214,18 +217,30 @@ html.dark {
 body {
   background-color: var(--brand-background);
   color: var(--brand-text-primary);
-  font-family: var(--font-sans);
-  
+  font-family: var(--font-reading);
+  font-size: 1rem;
+
   /* Improved text rendering */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  
+
   /* Prevent layout shift from scrollbar */
   overflow-y: scroll;
-  
+
   /* Base line height for readability */
-  line-height: 1.6;
+  line-height: 1.7;
+}
+
+button,
+input,
+select,
+textarea,
+label,
+small,
+nav,
+.font-ui {
+  font-family: var(--font-ui);
 }
 
 /*
@@ -294,6 +309,75 @@ body {
   --tw-prose-hr: var(--brand-border);
   --tw-prose-th-borders: var(--brand-border);
   --tw-prose-td-borders: var(--brand-border-subtle);
+  font-family: var(--font-reading);
+  line-height: 1.75;
+}
+
+.prose :where(h1) {
+  font-size: clamp(2.25rem, 1.4vw + 2rem, 3rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75em;
+}
+
+.prose :where(h2) {
+  font-size: clamp(1.9rem, 1vw + 1.6rem, 2.4rem);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin-top: 2em;
+  margin-bottom: 0.65em;
+}
+
+.prose :where(h3) {
+  font-size: clamp(1.6rem, 0.8vw + 1.4rem, 2rem);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin-top: 1.8em;
+  margin-bottom: 0.55em;
+}
+
+.prose :where(h4) {
+  font-size: clamp(1.3rem, 0.6vw + 1.2rem, 1.65rem);
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  margin-top: 1.6em;
+  margin-bottom: 0.5em;
+}
+
+.prose :where(h5) {
+  font-size: 1.1rem;
+  line-height: 1.35;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 1.4em;
+  margin-bottom: 0.45em;
+}
+
+.prose :where(h6) {
+  font-size: 1rem;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-text-muted);
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+}
+
+.prose :where(h2 + *),
+.prose :where(h3 + *),
+.prose :where(h4 + *),
+.prose :where(h5 + *),
+.prose :where(h6 + *) {
+  margin-top: 0;
+}
+
+.prose :where(p):not(:last-child) {
+  margin-bottom: 1.2em;
+}
+
+.prose :where(li) {
+  margin-top: 0.15em;
+  margin-bottom: 0.15em;
 }
 
 /* Link hover in prose */
