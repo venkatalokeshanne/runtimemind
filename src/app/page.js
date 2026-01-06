@@ -138,11 +138,12 @@ export default async function HomePage() {
                   href={`/articles/${featuredPost.slug}`}
                   className="group relative rounded-2xl overflow-hidden bg-surface border border-border hover:border-accent/50 transition-all duration-300 min-h-[300px]"
                 >
-                  {featuredPost.cover_image_url ? (
+                    {featuredPost.cover_image_url ? (
                       <Image
                       src={featuredPost.cover_image_url}
                       alt={featuredPost.title}
                       fill
+                      sizes="(min-width: 1024px) 50vw, 100vw"
                       className="object-contain group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
@@ -205,6 +206,7 @@ export default async function HomePage() {
                         src={post.cover_image_url}
                         alt={post.title}
                         fill
+                        sizes="(min-width: 1024px) 25vw, 50vw"
                         className="object-contain group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
@@ -244,6 +246,7 @@ export default async function HomePage() {
                         src={post.cover_image_url}
                         alt={post.title}
                         fill
+                        sizes="(min-width: 1024px) 25vw, 50vw"
                         className="object-contain group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
@@ -349,6 +352,7 @@ export default async function HomePage() {
                           src={s.cover_image_url}
                           alt={s.title}
                           fill
+                          sizes="(min-width: 1024px) 20vw, 60vw"
                           className="object-contain group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
@@ -540,6 +544,7 @@ export default async function HomePage() {
                       src={post.cover_image_url}
                       alt={post.title}
                       fill
+                      sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
