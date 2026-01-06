@@ -57,7 +57,7 @@ export function SiteFooter({ siteName = 'Ink' }) {
           <nav aria-label="Footer navigation">
             <ul className="flex items-center gap-6 text-sm">
               <li>
-                <Link 
+                <Link
                   href="/privacy"
                   className="text-text-muted hover:text-text-secondary transition-colors"
                 >
@@ -65,7 +65,15 @@ export function SiteFooter({ siteName = 'Ink' }) {
                 </Link>
               </li>
               <li>
-                <Link 
+                <Link
+                  href="/contact"
+                  className="text-text-muted hover:text-text-secondary transition-colors"
+                >
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/rss"
                   className="text-text-muted hover:text-text-secondary transition-colors"
                 >

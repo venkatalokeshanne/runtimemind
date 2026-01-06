@@ -108,6 +108,7 @@ export default async function BlogPage() {
                             src={featuredPost.cover_image_url}
                             alt={featuredPost.title}
                             fill
+                            sizes="(min-width: 1024px) 50vw, 100vw"
                             className="object-contain group-hover:scale-105 transition-transform duration-700"
                             priority
                           />
@@ -178,6 +179,7 @@ export default async function BlogPage() {
                               src={post.cover_image_url}
                               alt={post.title}
                               fill
+                              sizes="(min-width: 1024px) 12vw, 40vw"
                               className="object-contain group-hover:scale-105 transition-transform duration-500"
                             />
                           ) : (
