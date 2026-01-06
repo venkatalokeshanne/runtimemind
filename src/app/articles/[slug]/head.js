@@ -1,9 +1,12 @@
 import React from 'react';
+import { cache } from 'react';
 import { getPostBySlug } from '@/modules/articles/services';
+
+const getPostBySlugCached = cache(async (slug) => getPostBySlug(slug));
 
 export default async function Head({ params }) {
   const { slug } = params;
-  const { data: post } = await getPostBySlug(slug);
+  const { data: post } = await getPostBySlugCached(slug);
 
   if (!post) return null;
 

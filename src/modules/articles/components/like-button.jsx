@@ -53,7 +53,8 @@ export function LikeButton({
     setMounted(true);
   }, []);
 
-  // Fetch initial like status
+  // Fetch initial like status for authenticated users; unauthenticated viewers use
+  // the server-provided counts to avoid an extra network call on page load.
   useEffect(() => {
     async function fetchLikeInfo() {
       const { count: likeCount, liked: userLiked, error } = await getPostLikeInfo(postId, user?.id);
@@ -62,7 +63,10 @@ export function LikeButton({
         setLiked(userLiked);
       }
     }
-    fetchLikeInfo();
+
+    if (postId && user?.id) {
+      fetchLikeInfo();
+    }
   }, [postId, user?.id]);
 
   const handleClick = async (e) => {
