@@ -133,9 +133,9 @@
   --brand-accent-muted: #8D5C48;      /* Disabled state */
   
   /* BORDERS - More visible */
-  --brand-border: #2A2A2E;            /* Default borders */
-  --brand-border-subtle: #1F1F23;     /* Subtle dividers */
-  --brand-border-strong: #454550;     /* Emphasized borders */
+  --brand-border: #303030;                    /* Default borders - accessible contrast */
+  --brand-border-subtle: rgba(255, 255, 255, 0.12); /* Subtle dividers - softly defined */
+  --brand-border-strong: #383838;             /* Emphasized borders - clear separation */
   
   /* FEEDBACK - Vivid colors for dark mode */
   --brand-success: #34D399;
