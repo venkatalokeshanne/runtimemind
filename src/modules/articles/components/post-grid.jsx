@@ -60,7 +60,11 @@ function PostGridItem({ post }) {
     <motion.article variants={itemVariants} className="group h-full">
       <div className="block h-full flex flex-col">
         {/* Image - clickable to article */}
-        <Link href={`/articles/${post.slug}`} className="block">
+        <Link
+          href={`/articles/${post.slug}`}
+          className="block"
+          aria-label={`Open article: ${post.title}`}
+        >
           <div className="relative aspect-[16/10] mb-4 rounded-xl overflow-hidden bg-surface border border-border group-hover:border-accent/30 transition-colors">
             {(() => {
               const imageUrl = post.cover_image_url || post.series?.cover_image_url || null;

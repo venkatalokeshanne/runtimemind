@@ -83,13 +83,13 @@ export function RelatedPosts({ postId, seriesId, currentSlug }) {
                 
                 <div className="flex items-center gap-3 text-xs mt-auto">
                   {post.series_id && (
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-500 font-medium">
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-700 border border-purple-500/30 font-medium">
                       <Layers className="w-3 h-3" />
                       Series
                     </span>
                   )}
                   {post.published_at && (
-                    <time className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600">
+                    <time className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 border border-emerald-500/30">
                       {new Date(post.published_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric'
