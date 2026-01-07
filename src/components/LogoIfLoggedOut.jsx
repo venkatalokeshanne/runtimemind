@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/lib/auth';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 export default function LogoIfLoggedOut({ siteName = 'RuntimeMind' }) {
   const { user, loading } = useAuth();
@@ -13,6 +14,12 @@ export default function LogoIfLoggedOut({ siteName = 'RuntimeMind' }) {
   if (pathname !== '/') return null;
 
   return (
-    <img src="/logo.png" alt={`${siteName} logo`} className="inline-block w-12 h-12 rounded mr-3 object-cover align-middle" />
+    <Image
+      src="/logo.png"
+      alt={`${siteName} logo`}
+      width={48}
+      height={48}
+      className="inline-block w-12 h-12 rounded mr-3 object-cover align-middle"
+    />
   );
 }
