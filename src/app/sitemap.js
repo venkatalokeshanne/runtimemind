@@ -97,10 +97,7 @@ export default async function sitemap() {
     const title = (post?.title || '').toString();
     const updatedAt = post?.updated_at ? new Date(post.updated_at) : new Date();
     const resolvedImage = resolveImageUrl(post?.cover_image_url);
-    const image = resolvedImage
-      ? resolvedImage
-      : `${BASE_URL}/api/og?title=${encodeURIComponent(title || slug)}&type=article&author=${encodeURIComponent((post?.author_name || '').toString())}`;
-    const xmlSafeImage = escapeXmlEntities(image);
+    const xmlSafeImage = resolvedImage ? escapeXmlEntities(resolvedImage) : '';
 
     return {
       url: `${BASE_URL}/articles/${encodeURIComponent(slug)}`,
