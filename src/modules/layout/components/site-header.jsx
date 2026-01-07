@@ -38,6 +38,7 @@ import { useAuth } from '@/lib/auth';
 import { getInitials } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 export function SiteHeader({ siteName = 'Runtimemind' }) {
   const pathname = usePathname();
@@ -129,7 +130,7 @@ export function SiteHeader({ siteName = 'Runtimemind' }) {
             {/* Logo */}
             <Link href="/" className="group flex items-center gap-2.5 font-bold text-xl shrink-0">
               <div className="relative w-10 h-10 overflow-hidden rounded">
-                <img src="/logo.png" alt={`${siteName} logo`} className="w-full h-full object-cover" />
+                <Image src="/logo.png" alt={`${siteName} logo`} fill className="object-cover" sizes="40px" />
               </div>
               {/* Logo Text */}
               <span className="text-text-primary group-hover:text-accent transition-colors duration-200 hidden sm:block">

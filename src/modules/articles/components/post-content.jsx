@@ -26,6 +26,7 @@
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { Globe, Linkedin, Twitter } from 'lucide-react';
+import Image from 'next/image';
 import { SeriesNavigation } from './series-navigation';
 import { SeriesBanner } from './series-banner';
 import { RelatedPosts } from './related-posts';
@@ -112,11 +113,15 @@ export function PostContent({ post, fromSeries = false }) {
       {/* Cover Image */}
       {post.cover_image_url && (
         <figure className="mb-8 md:mb-12 -mx-4 md:mx-0">
-          <img
-            src={post.cover_image_url}
-            alt={`Cover image for ${post.title}`}
-            className="w-full aspect-[2/1] object-cover md:rounded-[var(--radius-lg)]"
-          />
+          <div className="relative w-full aspect-[2/1] overflow-hidden md:rounded-[var(--radius-lg)]">
+            <Image
+              src={post.cover_image_url}
+              alt={`Cover image for ${post.title}`}
+              fill
+              sizes="(min-width: 1024px) 720px, (min-width: 768px) 80vw, 100vw"
+              className="object-cover"
+            />
+          </div>
         </figure>
       )}
 
