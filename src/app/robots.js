@@ -13,7 +13,8 @@
  * ============================================================================
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.runtimemind.com';
+const normalizeBaseUrl = (value) => (value || '').trim().replace(/\/+$/, '');
+const BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_BASE_URL) || 'https://www.runtimemind.com';
 
 /**
  * Generate robots.txt content
