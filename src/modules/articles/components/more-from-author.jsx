@@ -68,12 +68,16 @@ export function MoreFromAuthor({ authorId, authorName, authorAvatar, currentPost
             className="group bg-surface rounded-xl border border-border overflow-hidden hover:border-accent/30 hover:shadow-lg transition-all duration-300"
           >
             {/* Cover Image */}
-            <Link href={`/articles/${post.slug}`} className="block">
+            <Link
+              href={`/articles/${post.slug}`}
+              className="block"
+              aria-label={`Read ${post.title}`}
+            >
               <div className="relative aspect-[16/9] bg-surface-inset overflow-hidden">
                 {post.cover_image_url ? (
                   <Image
                     src={post.cover_image_url}
-                    alt=""
+                    alt={`Cover image for ${post.title}`}
                     fill
                     className="object-contain group-hover:scale-105 transition-transform duration-300"
                   />
