@@ -36,6 +36,11 @@ const resolveImageUrl = (value) => {
   return '';
 };
 
+const escapeXmlEntities = (value) => {
+  if (!value) return '';
+  return value.replace(/&/g, '&amp;');
+};
+
 /**
  * Generate sitemap entries
  * 
@@ -95,13 +100,14 @@ export default async function sitemap() {
     const image = resolvedImage
       ? resolvedImage
       : `${BASE_URL}/api/og?title=${encodeURIComponent(title || slug)}&type=article&author=${encodeURIComponent((post?.author_name || '').toString())}`;
+    const xmlSafeImage = escapeXmlEntities(image);
 
     return {
       url: `${BASE_URL}/articles/${encodeURIComponent(slug)}`,
       lastModified: updatedAt,
       changeFrequency: 'weekly',
       priority: 0.8,
-      images: image ? [image] : undefined,
+      images: xmlSafeImage ? [xmlSafeImage] : undefined,
     };
   });
 
