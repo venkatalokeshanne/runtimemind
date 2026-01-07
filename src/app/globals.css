@@ -54,8 +54,8 @@
   --brand-text-inverse: #FFFFFF;      /* Text on dark backgrounds */
   
   /* ACCENT - Terracotta Copper (brighter, more vivid) */
-  --brand-accent: #C45D35;            /* Links, primary buttons - more vibrant */
-  --brand-accent-hover: #A84D2B;      /* Hover state - darker for feedback */
+  --brand-accent: #A64522;            /* Links, primary buttons - higher contrast */
+  --brand-accent-hover: #8C371A;      /* Hover state - darker for feedback */
   --brand-accent-subtle: #FFF5F2;     /* Accent tinted backgrounds */
   --brand-accent-muted: #E8A090;      /* Disabled accent elements */
   
@@ -127,8 +127,8 @@
   --brand-text-inverse: #0A0A0B;      /* Dark text on light backgrounds */
   
   /* ACCENT - Brighter copper for dark mode */
-  --brand-accent: #E8845C;            /* Brighter terracotta */
-  --brand-accent-hover: #F09A74;      /* Even lighter on hover */
+  --brand-accent: #C7643F;            /* Brighter terracotta with better contrast */
+  --brand-accent-hover: #D9744E;      /* Slightly lighter on hover */
   --brand-accent-subtle: #1F1410;     /* Dark tinted background */
   --brand-accent-muted: #8D5C48;      /* Disabled state */
   
