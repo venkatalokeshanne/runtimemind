@@ -96,7 +96,13 @@ export default async function sitemap() {
       ? resolvedImage
       : `${BASE_URL}/api/og?title=${encodeURIComponent(title || slug)}&type=article&author=${encodeURIComponent((post?.author_name || '').toString())}`;
 
-    return { url: `${BASE_URL}/articles/${encodeURIComponent(slug)}`, lastModified: updatedAt, changeFrequency: 'weekly', priority: 0.8, images: [{ url: image, title: title || '' }] };
+    return {
+      url: `${BASE_URL}/articles/${encodeURIComponent(slug)}`,
+      lastModified: updatedAt,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+      images: image ? [image] : undefined,
+    };
   });
 
   const seriesPages = (seriesList || []).map((s) => {
