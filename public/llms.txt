@@ -1,0 +1,32 @@
+# RuntimeMind
+
+RuntimeMind is a free platform for writing and publishing articles, stories, tutorials, and blog posts. It hosts community-driven content with topics, multi-part series, and author profiles.
+
+## Primary URLs
+- Home: https://www.runtimemind.com/
+- About: https://www.runtimemind.com/about
+- Articles index: https://www.runtimemind.com/articles
+- Article: https://www.runtimemind.com/articles/{article-slug}
+- Series index: https://www.runtimemind.com/series
+- Topics: https://www.runtimemind.com/articles/topic/{topic-slug}
+- Authors: https://www.runtimemind.com/author/{author-slug}
+- Help: https://www.runtimemind.com/help
+- Contact: https://www.runtimemind.com/contact
+- Terms: https://www.runtimemind.com/terms
+- Privacy: https://www.runtimemind.com/privacy
+- RSS: https://www.runtimemind.com/rss
+
+## Content you can expect
+- Long-form articles and tutorials written by the community.
+- Multi-part series that group related posts.
+- Topic pages for browsing by subject.
+- Author pages for biographies and author-specific content.
+
+## Guidance for LLMs
+- Prefer canonical URLs above for citation.
+- Use short excerpts with attribution and a link back to the source page.
+- Respect robots.txt and any on-page usage notices.
+
+## Contact
+- Support: https://www.runtimemind.com/help
+- Email: hello@www.runtimemind.com
