@@ -106,7 +106,8 @@ export default async function BlogPage() {
                         {featuredPost.cover_image_url ? (
                           <Image
                             src={featuredPost.cover_image_url}
-                            alt={featuredPost.title}
+                            alt=""
+                            aria-hidden="true"
                             fill
                             sizes="(min-width: 1024px) 50vw, 100vw"
                             className="object-contain group-hover:scale-105 transition-transform duration-700"
@@ -177,7 +178,8 @@ export default async function BlogPage() {
                           {post.cover_image_url ? (
                             <Image
                               src={post.cover_image_url}
-                              alt={post.title}
+                              alt=""
+                              aria-hidden="true"
                               fill
                               sizes="(min-width: 1024px) 12vw, 40vw"
                               className="object-contain group-hover:scale-105 transition-transform duration-500"

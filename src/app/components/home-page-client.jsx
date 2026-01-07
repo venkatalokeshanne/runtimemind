@@ -46,7 +46,7 @@ export function HomePageClient({ posts, tags, series, children }) {
             className="shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group rounded-full"
             asChild
           >
-            <Link href="/dashboard/new">
+            <Link href="/dashboard/new" aria-label="Write a new article">
               <PenTool className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
               <span className="hidden md:inline">Write</span>
             </Link>
