@@ -355,10 +355,20 @@ export async function incrementViewCount(postId) {
  */
 export async function getAllPostSlugs() {
   if (!isSupabaseConfigured) {
-    return { data: mockPosts.map(p => ({ slug: p.slug })), error: null };
+    return {
+      data: mockPosts.map((post) => ({
+        id: post.id,
+        slug: post.slug,
+        cover_image_url: post.cover_image_url || null,
+        updated_at: post.updated_at || post.published_at || post.created_at || null,
+      })),
+      error: null,
+    };
   }
 
-  const { data, error } = await supabaseFetch('posts?select=slug&published=eq.true');
+  const { data, error } = await supabaseFetch(
+    'posts?select=id,slug,cover_image_url,updated_at&published=eq.true'
+  );
 
   if (error) {
     console.error('Error fetching slugs:', error);

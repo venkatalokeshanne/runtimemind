@@ -94,7 +94,6 @@ export default async function sitemap() {
 
   const postPages = (posts || []).map((post) => {
     const slug = post?.slug || post?.id;
-    const title = (post?.title || '').toString();
     const updatedAt = post?.updated_at ? new Date(post.updated_at) : new Date();
     const resolvedImage = resolveImageUrl(post?.cover_image_url);
     const xmlSafeImage = resolvedImage ? escapeXmlEntities(resolvedImage) : '';
