@@ -33,6 +33,7 @@ import { SiteHeader, SiteFooter } from '@/modules/layout/components';
 import './globals.css';
 import WriteFloating from '@/components/WriteFloating';
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/options';
 
@@ -283,6 +284,7 @@ export default async function RootLayout({ children }) {
             <SiteFooter siteName="RuntimeMind" />
             <WriteFloating />
             <Analytics/>
+            <SpeedInsights/>
           </ClientProviders>
       </body>
     </html>
