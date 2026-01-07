@@ -23,7 +23,18 @@ import { getAllPostSlugs, getPublishedSeries, getTopicsWithPosts } from '@/modul
  * Base URL for the site
  * In production, this should come from environment variable
  */
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.runtimemind.com';
+const normalizeBaseUrl = (value) => (value || '').trim().replace(/\/+$/, '');
+const BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_BASE_URL) || 'https://www.runtimemind.com';
+
+const resolveImageUrl = (value) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'object') {
+    const candidate = value.publicUrl || value.url || value.href;
+    return typeof candidate === 'string' ? candidate.trim() : '';
+  }
+  return '';
+};
 
 /**
  * Generate sitemap entries
@@ -80,8 +91,9 @@ export default async function sitemap() {
     const slug = post?.slug || post?.id;
     const title = (post?.title || '').toString();
     const updatedAt = post?.updated_at ? new Date(post.updated_at) : new Date();
-    const image = post?.cover_image_url && post.cover_image_url.trim()
-      ? post.cover_image_url
+    const resolvedImage = resolveImageUrl(post?.cover_image_url);
+    const image = resolvedImage
+      ? resolvedImage
       : `${BASE_URL}/api/og?title=${encodeURIComponent(title || slug)}&type=article&author=${encodeURIComponent((post?.author_name || '').toString())}`;
 
     return { url: `${BASE_URL}/articles/${encodeURIComponent(slug)}`, lastModified: updatedAt, changeFrequency: 'weekly', priority: 0.8, images: [{ url: image, title: title || '' }] };
