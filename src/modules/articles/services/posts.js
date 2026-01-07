@@ -355,10 +355,10 @@ export async function incrementViewCount(postId) {
  */
 export async function getAllPostSlugs() {
   if (!isSupabaseConfigured) {
-    return { data: mockPosts.map(p => ({ slug: p.slug })), error: null };
+    return { data: mockPosts.map(p => ({ slug: p.slug, title: p.title, updated_at: p.updated_at, cover_image_url: p.cover_image_url })), error: null };
   }
 
-  const { data, error } = await supabaseFetch('posts?select=slug&published=eq.true');
+  const { data, error } = await supabaseFetch('posts?select=slug,title,updated_at,cover_image_url&published=eq.true');
 
   if (error) {
     console.error('Error fetching slugs:', error);
