@@ -119,6 +119,8 @@ export function PostContent({ post, fromSeries = false }) {
               alt={`Cover image for ${post.title}`}
               fill
               sizes="(min-width: 1024px) 720px, (min-width: 768px) 80vw, 100vw"
+              priority
+              fetchPriority="high"
               className="object-cover"
             />
           </div>
