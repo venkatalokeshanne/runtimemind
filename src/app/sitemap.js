@@ -17,7 +17,7 @@
  * ============================================================================
  */
 
-import { getAllPostSlugs, getPublishedSeries, getTopicsWithPosts } from '@/modules/articles/services';
+import { getAllPostSlugs, getAllPublishedSeries, getTopicsWithPosts } from '@/modules/articles/services';
 
 /**
  * Base URL for the site
@@ -25,6 +25,7 @@ import { getAllPostSlugs, getPublishedSeries, getTopicsWithPosts } from '@/modul
  */
 const normalizeBaseUrl = (value) => (value || '').trim().replace(/\/+$/, '');
 const BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_BASE_URL) || 'https://www.runtimemind.com';
+const STATIC_LAST_MODIFIED = new Date(process.env.SITE_BUILD_TIMESTAMP || '2024-01-01');
 
 const resolveImageUrl = (value) => {
   if (!value) return '';
@@ -48,14 +49,14 @@ const escapeXmlEntities = (value) => {
  */
 export default async function sitemap() {
   const staticPages = [
-    { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
-    { url: `${BASE_URL}/articles`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${BASE_URL}/series`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${BASE_URL}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE_URL}/help`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
-    { url: `${BASE_URL}/terms`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
-    { url: `${BASE_URL}/privacy`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
-    { url: `${BASE_URL}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
+    { url: BASE_URL, lastModified: STATIC_LAST_MODIFIED, changeFrequency: 'daily', priority: 1 },
+    { url: `${BASE_URL}/articles`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE_URL}/series`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${BASE_URL}/about`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/help`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${BASE_URL}/terms`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${BASE_URL}/privacy`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${BASE_URL}/contact`, lastModified: STATIC_LAST_MODIFIED, changeFrequency: 'monthly', priority: 0.4 },
   ];
 
   // Safe dynamic calls
@@ -77,7 +78,7 @@ export default async function sitemap() {
 
   let seriesList = [];
   try {
-    const res = await getPublishedSeries();
+    const res = await getAllPublishedSeries();
     seriesList = (res && res.data) || [];
   } catch (e) {
     seriesList = [];
@@ -109,7 +110,15 @@ export default async function sitemap() {
 
   const seriesPages = (seriesList || []).map((s) => {
     const slug = s?.slug || s?.id;
-    return { url: `${BASE_URL}/series/${encodeURIComponent(slug)}`, lastModified: s?.updated_at ? new Date(s.updated_at) : new Date(), changeFrequency: 'weekly', priority: 0.85 };
+    const resolvedImage = resolveImageUrl(s?.cover_image_url);
+    const xmlSafeImage = resolvedImage ? escapeXmlEntities(resolvedImage) : '';
+    return {
+      url: `${BASE_URL}/series/${encodeURIComponent(slug)}`,
+      lastModified: s?.updated_at ? new Date(s.updated_at) : new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.85,
+      images: xmlSafeImage ? [xmlSafeImage] : undefined,
+    };
   });
 
   return [...staticPages, ...topicPages, ...postPages, ...seriesPages];

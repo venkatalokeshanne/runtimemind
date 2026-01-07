@@ -121,6 +121,29 @@ export async function getPublishedSeries({ limit = 20, offset = 0 } = {}) {
 }
 
 /**
+ * Get all published series without pagination
+ */
+export async function getAllPublishedSeries({ pageSize = 100 } = {}) {
+  let allSeries = [];
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data, error } = await getPublishedSeries({ limit: pageSize, offset });
+    if (error) {
+      return { data: null, error, count: 0 };
+    }
+
+    const batch = data || [];
+    allSeries = allSeries.concat(batch);
+    offset += pageSize;
+    hasMore = batch.length === pageSize;
+  }
+
+  return { data: allSeries, error: null, count: allSeries.length };
+}
+
+/**
  * Get series by slug (public view)
  */
 export async function getSeriesBySlug(slug) {
