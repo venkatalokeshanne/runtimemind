@@ -26,6 +26,7 @@ export {
 
 export {
   getPublishedSeries,
+  getAllPublishedSeries,
   getSeriesBySlug,
   getSeriesById,
   getUserSeries,
