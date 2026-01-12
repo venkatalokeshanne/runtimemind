@@ -17,6 +17,26 @@ export const metadata = {
   title: 'RuntimeMind | Write Articles, Stories & Blog Posts Free',
   description: 'Start writing today! Publish articles, stories, tutorials, and blog posts for free. Join a community of writers, developers, and creators sharing ideas.',
   keywords: ['write articles free', 'publish blog posts', 'free writing platform', 'blogging site', 'share stories online', 'tech blog', 'create content', 'write online', 'article writing', 'story publishing'],
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: 'https://www.runtimemind.com',
+  },
+  openGraph: {
+    title: 'RuntimeMind | Write Articles, Stories & Blog Posts Free',
+    description: 'Start writing today! Publish articles, stories, tutorials, and blog posts for free.',
+    url: 'https://www.runtimemind.com',
+    type: 'website',
+    images: [{ url: '/runtimemindhome.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'RuntimeMind',
+    description: 'Start writing today! Publish articles, stories, tutorials, and blog posts for free.',
+    images: ['/runtimemindhome.png'],
+  },
 };
 
 // JSON-LD structured data for homepage
