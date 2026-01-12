@@ -26,7 +26,7 @@ export default function robots() {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        allow: ['/', '/api/og', '/api/rss'],
         disallow: [
           '/api/',        // API routes
           '/dashboard/',  // Dashboard (private)

@@ -14,6 +14,13 @@ import Link from 'next/link';
 export const metadata = {
   title: 'About RuntimeMind - Free Article & Blog Writing Platform',
   description: 'RuntimeMind is a free platform where anyone can write and publish articles, stories, tutorials, and blog posts. Join our community of writers and creators.',
+  alternates: {
+    canonical: 'https://www.runtimemind.com/about',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     title: 'About RuntimeMind - Free Article & Blog Writing Platform',
     description: 'RuntimeMind is a free platform where anyone can write and publish articles, stories, tutorials, and blog posts.',
